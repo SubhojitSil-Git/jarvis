@@ -6,8 +6,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 /* ================================================================
    LOCAL INTELLIGENCE DATABASE
    ================================================================
-   How to add more: 
-   "keyword": ["Response 1", "Response 2", "Response 3"]
 */
 const LOCAL_DB = {
     // --- GREETINGS ---
@@ -27,7 +25,7 @@ const LOCAL_DB = {
     "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online."],
     "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir."],
     "destroy": ["Maximum firepower authorized.", "Reducing target to ash."],
-    "attack": [" engaging hostiles.", "Suppressive fire initiated."],
+    "attack": ["Engaging hostiles.", "Suppressive fire initiated."],
     "fire": ["Discharging payload.", "Firing main cannon."],
     "relax": ["Standing down.", "Combat mode disengaged.", "Cooling down weapons."],
 
@@ -39,13 +37,14 @@ const LOCAL_DB = {
     "cool": ["Indeed.", "Technologically superior.", "I try my best."],
     "love": ["My emotional subroutines are... limited.", "I am fond of you as well, sir."],
 
-    // --- GESTURE SPECIFIC (Triggered by voice too) ---
+    // --- GESTURE SPECIFIC ---
     "hand": ["Visual sensors tracking hand movements.", "Interface active."],
-    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."]
-   // --- SHUTDOWN PROTOCOL ---
+    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."],
+
+    // --- SHUTDOWN PROTOCOL ---
     "sleep": [
         function() {
-            // 1. Trigger Visual Shutdown after 2 seconds (allows him to speak first)
+            // 1. Trigger Visual Shutdown after 1.5 seconds
             setTimeout(() => {
                 // Fade out everything
                 document.body.style.transition = "opacity 3s";
@@ -70,7 +69,6 @@ const LOCAL_DB = {
         return "Going dark."; 
     }]
 };
-
 // --- STATE MANAGEMENT ---
 const State = {
     handActive: false,
@@ -458,4 +456,5 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
 
