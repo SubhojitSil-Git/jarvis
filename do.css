@@ -1,146 +1,166 @@
+/* GLOBAL SETTINGS */
 body { 
     margin: 0; 
     overflow: hidden; 
-    background-color: #000; 
-    font-family: 'Segoe UI', sans-serif; 
-    user-select: none; 
+    background: #000; 
+    font-family: 'Courier New', Courier, monospace; 
 }
 
-canvas { display: block; }
-#video-input { display: none; } 
+canvas { 
+    display: block; 
+    width: 100vw; 
+    height: 100vh; 
+}
 
 /* --- HUD LAYER --- */
-#hud-layer {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none;
-    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%);
-    z-index: 10;
+#hud-layer { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    pointer-events: none; /* Allows clicking through the HUD */
+    z-index: 10; 
 }
 
-/* --- START SCREEN --- */
-#start-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(2, 8, 12, 0.98);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
-    pointer-events: all;
+/* RETICLE (Aiming Circle) */
+#reticle {
+    position: absolute; 
+    width: 40px; 
+    height: 40px;
+    border: 2px solid #00ffff; 
+    border-radius: 50%;
+    transform: translate(-50%, -50%); 
+    display: none;
+    box-shadow: 0 0 10px #00ffff; 
+    transition: width 0.1s;
 }
 
-#start-btn {
-    background: rgba(0, 255, 255, 0.05);
-    color: #00ffff;
-    border: 2px solid #00ffff;
-    padding: 20px 60px;
-    font-size: 24px;
-    letter-spacing: 8px;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    font-family: 'Courier New', monospace;
-    font-weight: 900;
-}
-
-#start-btn:hover { 
+#reticle-inner { 
+    width: 4px; 
+    height: 4px; 
     background: #00ffff; 
-    color: #000; 
-    box-shadow: 0 0 100px #00ffff;
-    transform: scale(1.05);
+    margin: 16px; 
+    border-radius: 50%; 
 }
 
-.sys-msg {
-    margin-top: 20px;
-    color: #008888;
-    font-family: 'Courier New';
-    font-size: 12px;
-    letter-spacing: 2px;
-    animation: blink 2s infinite;
-}
-
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-/* --- HUD PANELS --- */
-.hud-panel {
-    position: absolute;
-    color: #00ffff;
-    padding: 20px;
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    background: rgba(0, 20, 30, 0.4);
-    backdrop-filter: blur(4px);
-    width: 250px;
+/* TEXT PANELS */
+.hud-panel { 
+    position: absolute; 
+    padding: 20px; 
+    color: #00ffff; 
+    text-shadow: 0 0 5px #00ffff; 
+    background: rgba(0, 20, 40, 0.2); /* Slight background for readability */
+    border: 1px solid rgba(0, 255, 255, 0.1);
 }
 
 .top-left { 
-    top: 40px; left: 40px; 
-    border-left: 4px solid #00ffff;
-    border-top-right-radius: 20px;
+    top: 20px; 
+    left: 20px; 
+    text-align: left; 
+    border-top-left-radius: 10px;
 }
 
 .bottom-right { 
-    bottom: 40px; right: 40px; 
+    bottom: 20px; 
+    right: 20px; 
     text-align: right; 
-    border-right: 4px solid #00ffff;
-    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 10px;
 }
 
-h1 { margin: 0 0 10px 0; font-size: 20px; letter-spacing: 3px; font-weight: 300; border-bottom: 1px solid rgba(0,255,255,0.3); padding-bottom: 5px; }
-.version { font-size: 10px; vertical-align: top; color: #fff; }
-.row { font-size: 11px; margin-top: 5px; font-family: 'Courier New'; color: #aaddff; opacity: 0.8; }
-
-.cmd-item { 
-    font-size: 10px; font-family: 'Courier New'; color: #008888; margin-bottom: 4px; transition: color 0.2s; 
+h1 { 
+    margin: 0; 
+    font-size: 24px; 
+    letter-spacing: 2px; 
+    border-bottom: 1px solid #00ffff; 
+    padding-bottom: 5px; 
+    margin-bottom: 10px;
 }
-.cmd-active { color: #fff; text-shadow: 0 0 8px #fff; font-weight: bold; }
 
-/* --- SUBTITLES --- */
+.row { 
+    font-size: 14px; 
+    margin-top: 5px; 
+    opacity: 0.9; 
+    letter-spacing: 1px;
+}
+
+/* SUBTITLES */
 #subtitle-box {
-    position: absolute;
-    bottom: 15%;
-    width: 100%;
-    text-align: center;
-    color: #ffffff;
-    font-family: 'Courier New', monospace;
-    font-size: 18px;
-    text-shadow: 0 2px 4px #000;
-    opacity: 0.9;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.5), transparent);
-    padding: 10px 0;
+    position: absolute; 
+    bottom: 100px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    color: #fff; 
+    font-size: 18px; 
+    text-align: center; 
+    width: 80%;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
 }
 
-/* --- RETICLE --- */
-#reticle {
-    position: absolute;
-    width: 150px; height: 150px;
-    border: 1px dashed rgba(0, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    display: none;
-    pointer-events: none;
-    transition: width 0.2s, height 0.2s;
+/* GESTURE LIST COMMANDS */
+.cmd-item { 
+    font-size: 12px; 
+    margin-top: 5px; 
+    color: #555; 
+    transition: 0.3s; 
 }
 
-#reticle-inner {
-    position: absolute; top: 50%; left: 50%;
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    border-top-color: #00ffff;
-    border-bottom-color: #00ffff;
-    animation: spin 3s linear infinite;
-    box-shadow: 0 0 15px rgba(0,255,255,0.2);
+.cmd-active { 
+    color: #00ffff; 
+    font-weight: bold; 
+    text-shadow: 0 0 8px #00ffff; 
+    transform: scale(1.1); 
+    margin-right: 10px;
 }
 
-@keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+/* --- START SCREEN OVERLAY --- */
+#start-overlay {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0,0,0,0.95); 
+    z-index: 20;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center;
+}
 
-/* Combat Mode Override */
-.combat .hud-panel { border-color: #ff3333; color: #ff3333; }
-.combat .top-left { border-left-color: #ff3333; }
-.combat .bottom-right { border-right-color: #ff3333; }
-.combat #reticle-inner { border-top-color: #ff3333; border-bottom-color: #ff3333; box-shadow: 0 0 15px rgba(255, 50, 50, 0.4); }
-.combat #start-btn { color: #ff3333; border-color: #ff3333; }
+.title {
+    border: none; 
+    margin-bottom: 30px; 
+    font-size: 60px;
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff;
+}
+
+button {
+    background: transparent; 
+    border: 2px solid #00ffff; 
+    color: #00ffff;
+    padding: 15px 50px; 
+    font-size: 18px; 
+    cursor: pointer;
+    letter-spacing: 4px; 
+    transition: 0.3s;
+    box-shadow: 0 0 15px #00ffff;
+    font-family: inherit;
+    text-transform: uppercase;
+}
+
+button:hover { 
+    background: #00ffff; 
+    color: #000; 
+    box-shadow: 0 0 30px #00ffff;
+}
+
+.warning {
+    color: #00aaaa; 
+    margin-top: 20px;
+    font-size: 12px;
+}
