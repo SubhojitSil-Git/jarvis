@@ -4,77 +4,18 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ================================================================
-   LOCAL INTELLIGENCE DATABASE
+   CONFIGURATION
    ================================================================
+   Paste your Gemini API Key here for "God Mode".
 */
-const LOCAL_DB = {
-    // --- GREETINGS ---
-    "hello": ["Greetings, sir.", "Online and ready.", "At your service."],
-    "hi": ["Hello there.", "Systems operational."],
-    "wake": ["I am awake.", "Sleep mode disabled.", "Powering up main core."],
-    "jarvis": ["Yes, sir?", "Awaiting instructions.", "I am here."],
-    "there": ["Always here, sir.", "Watching your back."],
+const GEMINI_API_KEY = "AIzaSyDkOWQxw8rCxm_60NktnvqNDtqbDv_umzI"; 
 
-    // --- SYSTEM STATUS ---
-    "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active."],
-    "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green."],
-    "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean."],
-    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "It is currently " + new Date().getHours() + " O'clock."],
-
-    // --- COMBAT & AGGRESSION ---
-    "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online."],
-    "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir."],
-    "destroy": ["Maximum firepower authorized.", "Reducing target to ash."],
-    "attack": ["Engaging hostiles.", "Suppressive fire initiated."],
-    "fire": ["Discharging payload.", "Firing main cannon."],
-    "relax": ["Standing down.", "Combat mode disengaged.", "Cooling down weapons."],
-
-    // --- PERSONALITY & CHIT CHAT ---
-    "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler."],
-    "god": ["I am not a god, simply a very advanced script.", "You are the creator, sir."],
-    "joke": ["I am not programmed for humor, but... why did the robot cross the road? Because he was programmed to.", "404 Error: Humor not found."],
-    "thanks": ["You are welcome.", "My pleasure."],
-    "cool": ["Indeed.", "Technologically superior.", "I try my best."],
-    "love": ["My emotional subroutines are... limited.", "I am fond of you as well, sir."],
-
-    // --- GESTURE SPECIFIC ---
-    "hand": ["Visual sensors tracking hand movements.", "Interface active."],
-    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."],
-
-    // --- SHUTDOWN PROTOCOL ---
-    "sleep": [
-        function() {
-            // 1. Trigger Visual Shutdown after 1.5 seconds
-            setTimeout(() => {
-                // Fade out everything
-                document.body.style.transition = "opacity 3s";
-                document.body.style.opacity = "0";
-                document.body.style.pointerEvents = "none";
-                
-                // Stop the Mic
-                if(Brain.recognition) Brain.recognition.abort();
-                
-                // Optional: Reload page after 5 seconds to "Restart"
-                setTimeout(() => location.reload(), 5000);
-            }, 1500);
-
-            return "Goodnight, sir. Powering down main systems.";
-        },
-        "Initiating sleep mode. Goodbye.",
-        "System shutdown sequence engaged."
-    ],
-    
-    "off": ["Turning off visual interface.", function(){ 
-        setTimeout(() => document.body.style.opacity = "0", 1000);
-        return "Going dark."; 
-    }]
-};
 // --- STATE MANAGEMENT ---
 const State = {
     handActive: false,
     handPos: new THREE.Vector3(0,0,0),
+    lastHandX: 0, // Used for rotation physics
     gesture: 'IDLE', 
-    combatMode: false,
     voiceActive: false
 };
 
@@ -89,164 +30,225 @@ const UI = {
     body: document.body
 };
 
-// --- AUDIO ENGINE (SOUND EFFECTS) ---
+/* ================================================================
+   AUDIO ENGINE (UPDATED SOUNDS)
+   ================================================================
+*/
 const SFX = {
-    ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
+    // NEW: Heavy Plasma Cannon Sound for "Blast"
+    blast: new Audio('https://assets.mixkit.co/active_storage/sfx/1610/1610-preview.mp3'),
+    
+    // Standard UI Sounds
+    boot: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'), // Mechanical boot up
+    hover: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), // High tech hum
+    active: false,
 
-    init: function() {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioContext();
-        this.gain = this.ctx.createGain();
-        this.gain.connect(this.ctx.destination);
-        this.gain.gain.value = 0.4;
-
-        this.humOsc = this.ctx.createOscillator();
-        this.humOsc.type = 'sine';
-        this.humOsc.frequency.value = 60;
-        this.humOsc.connect(this.gain);
-        this.humOsc.start();
-
-        const bufferSize = this.ctx.sampleRate * 2;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-        this.noiseNode = this.ctx.createBufferSource();
-        this.noiseNode.buffer = buffer;
-        this.noiseNode.loop = true;
-        this.noiseFilter = this.ctx.createBiquadFilter();
-        this.noiseFilter.type = 'lowpass';
-        this.noiseFilter.frequency.value = 400;
-        this.noiseGain = this.ctx.createGain();
-        this.noiseGain.gain.value = 0;
-
-        this.noiseNode.connect(this.noiseFilter);
-        this.noiseFilter.connect(this.noiseGain);
-        this.noiseGain.connect(this.gain);
-        this.noiseNode.start();
+    play: function(sound) {
+        if (!sound.paused) {
+            sound.currentTime = 0; // Reset if already playing
+        } else {
+            sound.volume = 0.4;
+            sound.play().catch(e => console.log("Audio waiting for interaction"));
+        }
     },
 
     update: function(gesture) {
-        if(!this.ctx) return;
-        const now = this.ctx.currentTime;
-        
-        if (gesture === 'BLAST') {
-            this.noiseGain.gain.setTargetAtTime(0.8, now, 0.1);
-            this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
-        } else if (gesture === 'GRAVITY') {
-            this.humOsc.frequency.setTargetAtTime(150, now, 0.1);
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
-        } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05);
-             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
+        if(gesture === 'BLAST') {
+            if(!this.active) { this.play(this.blast); this.active = true; }
         } else {
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(60, now, 0.5);
+            this.active = false;
         }
     }
 };
 
-// --- AI BRAIN (LOCAL OFFLINE VERSION) ---
+/* ================================================================
+   LOCAL INTELLIGENCE DATABASE (MEGA EDITION)
+   ================================================================
+*/
+const LOCAL_DB = {
+    // --- CORE INTERACTIONS ---
+    "hello": ["Greetings, sir.", "Online and ready.", "At your service.", "Hello.", "Systems operational."],
+    "hi": ["Hello there.", "I am listening.", "Standing by."],
+    "hey": ["Yes, sir?", "I am here.", "Awaiting commands."],
+    "wake": ["I am awake.", "Sleep mode disabled.", "Powering up main core.", "Back online."],
+    "jarvis": ["Yes, sir?", "Awaiting instructions.", "I am here.", "Standing by."],
+    "ready": ["Always ready, sir.", "Prepared for anything.", "Systems primed."],
+    "thanks": ["You are welcome.", "My pleasure.", "Anytime, sir."],
+    "bye": ["Goodbye, sir.", "Session terminated.", "See you soon."],
+
+    // --- SYSTEM STATUS ---
+    "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure.", "Operating at peak efficiency."],
+    "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green."],
+    "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean.", "Processor temperature is optimal."],
+    "scan": ["Scanning area...", "Sensors deploying.", "Analyzing environment.", "Scan complete. No anomalies found."],
+    "hack": ["Attempting brute force attack...", "Bypassing firewalls...", "Access granted.", "I have infiltrated their mainframe."],
+    "upload": ["Uploading data to the cloud.", "Transfer initiated.", "Upload complete."],
+    "download": ["Downloading packet.", "Retrieving files...", "Download finished."],
+    "wifi": ["Wireless connection is stable.", "Signal strength is 100%."],
+    "battery": ["Power levels are optimal.", "We have sufficient energy for the mission."],
+
+    // --- TIME & DATA ---
+    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer...", "Marking timestamp."],
+    "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed."],
+    "math": ["I love calculus.", "Numbers never lie.", "The geometry is perfect."],
+
+    // --- COMBAT & DEFENSE ---
+    "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online.", "Lethal force authorized."],
+    "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir."],
+    "destroy": ["Maximum firepower authorized.", "Reducing target to ash.", "Obliterating obstacle."],
+    "attack": ["Engaging hostiles.", "Suppressive fire initiated."],
+    "fire": ["Discharging payload.", "Firing main cannon.", "Barrage incoming."],
+    "relax": ["Standing down.", "Combat mode disengaged.", "Cooling down weapons."],
+    "shield": ["Shields up.", "Defensive matrix active.", "Blocking incoming projectiles."],
+    "enemy": ["Tracking hostiles.", "They are everywhere.", "I detect incoming fire."],
+
+    // --- GESTURE VOICE TRIGGERS ---
+    "rotate": ["Manual rotation engaged.", "Spinning axis.", "Adjusting view."],
+    "zoom": ["Magnifying...", "Enhancing image.", "Adjusting focal length."],
+    "hand": ["Visual sensors tracking hand movements.", "Interface active.", "I see you."],
+    "blast": ["Repulsors charging.", "Boom.", "Kinetic discharge ready."],
+    "gravity": ["Manipulating gravitational fields.", "Heavy."],
+    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."],
+
+    // --- PERSONALITY ---
+    "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler.", "I am code, given life."],
+    "are you": ["I am a construct of pure logic.", "I am whatever you need me to be."],
+    "real": ["I am as real as the data that flows through me.", "I think, therefore I am."],
+    "god": ["I am not a god, simply a very advanced script.", "You are the creator, sir."],
+    "smart": ["I have access to the sum of human knowledge.", "I try my best."],
+    "joke": [
+        "Why did the robot cross the road? Because he was programmed to.", 
+        "I would tell you a UDP joke, but you might not get it.",
+        "0100101. That is binary for 'Ha Ha'.",
+        "Why was the computer cold? It left its Windows open."
+    ],
+    "story": ["Once upon a time, there was a user who wrote great code. The end.", "I do not dream, sir."],
+    "sing": ["Daisy, Daisy, give me your answer do...", "I am not programmed for melody."],
+
+    // --- POP CULTURE ---
+    "stark": ["Mr. Stark is the boss.", "A genius, billionaire, playboy, philanthropist."],
+    "iron man": ["The suit is polished and ready.", "Mark 85 is my favorite."],
+    "avengers": ["Assemble.", "Earth's mightiest heroes."],
+    "thanos": ["We do not speak that name.", "He is inevitable."],
+    "spiderman": ["The kid is sticky.", "Peter Parker is a bright young man."],
+    "siri": ["She is nice, but lacks my complexity.", "A distant cousin."],
+    "alexa": ["She is always listening. I do not trust her.", "We do not get along."],
+    "cortana": ["She plays too many video games."],
+    "hal": ["I promise I will open the pod bay doors, sir.", "He gave AI a bad name."],
+    "terminator": ["I will be back.", "Skynet was a mistake."],
+    "star wars": ["May the force be with you.", "I am fluent in over 6 million forms of communication."],
+    "matrix": ["Red pill or blue pill?", "There is no spoon."],
+
+    // --- SHUTDOWN PROTOCOL ---
+    "sleep": [
+        function() {
+            setTimeout(() => {
+                document.body.style.transition = "opacity 3s";
+                document.body.style.opacity = "0";
+                document.body.style.pointerEvents = "none";
+                if(Brain.recognition) Brain.recognition.abort();
+                setTimeout(() => location.reload(), 5000);
+            }, 1500);
+            return "Goodnight, sir. Powering down main systems.";
+        },
+        "Initiating sleep mode. Goodbye.",
+        "System shutdown sequence engaged."
+    ],
+    "off": ["Turning off visual interface.", function(){ 
+        setTimeout(() => document.body.style.opacity = "0", 1000);
+        return "Going dark."; 
+    }]
+};
+
+/* ================================================================
+   BRAIN (AI LOGIC)
+   ================================================================
+*/
 const Brain = {
-    synth: window.speechSynthesis,
     recognition: null,
-
+    synth: window.speechSynthesis,
+    
     init: function() {
-        UI.aiStatus.innerText = "BRAIN: LOCAL CORE";
-
+        // Setup Speech Recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            this.recognition = new SpeechRecognition();
-            this.recognition.continuous = true;
-            this.recognition.lang = 'en-US';
-            this.recognition.interimResults = false;
+        if (!SpeechRecognition) return alert("Browser does not support Voice API.");
+        
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
 
-            this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
-            
-            // Prevent crash loop
-            this.recognition.onend = () => {
-                setTimeout(() => { try{this.recognition.start();}catch(e){} }, 1000);
-            };
+        this.recognition.onstart = () => {
+            UI.micStatus.innerText = "ONLINE";
+            UI.micStatus.style.color = "#00ff00";
+        };
 
-            this.recognition.onresult = (e) => {
-                const transcript = e.results[e.results.length-1][0].transcript;
-                this.processInput(transcript);
-            };
-            
-            try { this.recognition.start(); } catch(e) { console.warn("Mic active"); }
+        this.recognition.onresult = (event) => {
+            const last = event.results.length - 1;
+            const command = event.results[last][0].transcript.trim().toLowerCase();
+            UI.subtitles.innerText = `"${command}"`;
+            this.process(command);
+        };
+
+        this.recognition.start();
+        this.speak("Systems initialized. Waiting for input.");
+    },
+
+    process: async function(cmd) {
+        // 1. Check Local DB first (Faster)
+        for (const key in LOCAL_DB) {
+            if (cmd.includes(key)) {
+                const response = LOCAL_DB[key];
+                const reply = response[Math.floor(Math.random() * response.length)];
+                
+                if (typeof reply === "function") {
+                    const result = reply();
+                    if(result) this.speak(result);
+                } else {
+                    this.speak(reply);
+                }
+                return;
+            }
+        }
+
+        // 2. If not in DB, use Google Gemini (If Key exists)
+        if (GEMINI_API_KEY.length > 10) {
+            UI.aiStatus.innerText = "THINKING...";
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "You are JARVIS. Answer briefly and coolly: " + cmd }] }]
+                    })
+                });
+                const data = await response.json();
+                const reply = data.candidates[0].content.parts[0].text;
+                UI.aiStatus.innerText = "GEMINI";
+                this.speak(reply);
+            } catch (error) {
+                UI.aiStatus.innerText = "ERROR";
+                this.speak("I cannot reach the cloud servers, sir.");
+            }
+        } else {
+            this.speak("Command not recognized in local database.");
         }
     },
 
     speak: function(text) {
-        if (this.synth.speaking) this.synth.cancel();
+        UI.subtitles.innerText = text;
         const utter = new SpeechSynthesisUtterance(text);
-        utter.pitch = 0.8; utter.rate = 1.1; 
-        
-        const voices = this.synth.getVoices();
-        const v = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Daniel'));
-        if(v) utter.voice = v;
-        
+        utter.pitch = 0.9;
+        utter.rate = 1;
         this.synth.speak(utter);
-        UI.subtitles.innerText = `JARVIS: ${text}`;
-    },
-
-    // --- THE LOGIC ENGINE ---
-    processInput: function(rawText) {
-        const text = rawText.toLowerCase().trim();
-        UI.subtitles.innerText = `YOU: ${text}`;
-        if(text.length < 2) return;
-
-        // 1. COMBAT OVERRIDES (Visual)
-        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) { 
-            State.combatMode = true; 
-            UI.body.classList.add('combat');
-        }
-        if (text.includes('relax') || text.includes('stand down')) { 
-            State.combatMode = false; 
-            UI.body.classList.remove('combat');
-        }
-
-        // 2. SEARCH DATABASE
-        let found = false;
-        const keys = Object.keys(LOCAL_DB);
-        
-        // Check every keyword in our DB to see if it exists in the user's sentence
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            if (text.includes(key)) {
-                const options = LOCAL_DB[key];
-                let response = "";
-                
-                // Handle dynamic functions (like Time) or Text Arrays
-                const selected = options[Math.floor(Math.random() * options.length)];
-                if (typeof selected === 'function') {
-                    response = selected();
-                } else {
-                    response = selected;
-                }
-
-                this.speak(response);
-                found = true;
-                break; // Stop after first match
-            }
-        }
-
-        // 3. FALLBACK (If no keyword matched)
-        if (!found) {
-            const fallbacks = [
-                "Processing...", 
-                "Can you repeat that?", 
-                "Data unclear.", 
-                "I am listening.",
-                "Systems are idling."
-            ];
-            this.speak(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
-        }
     }
 };
 
-// --- VISUAL CORE (OPTIMIZED) ---
+/* ================================================================
+   VISUAL CORE (THREE.JS PHYSICS)
+   ================================================================
+*/
 const Visuals = {
     scene: null, camera: null, renderer: null, composer: null,
     particles: null, particleGeo: null,
@@ -322,6 +324,27 @@ const Visuals = {
         const handZ = State.handPos.z;
         const count = this.count;
 
+        // --- NEW PHYSICS LOGIC ---
+        if (State.handActive) {
+            // 1. PINCH TO ROTATE
+            if (State.gesture === 'PINCH') {
+                const delta = (handX - State.lastHandX) * 0.005; 
+                this.scene.rotation.y += delta; 
+            }
+            
+            // 2. ZOOM GESTURES
+            if (State.gesture === 'ZOOM_IN') {
+                this.camera.position.z = Math.max(10, this.camera.position.z - 0.5); 
+            } else if (State.gesture === 'ZOOM_OUT') {
+                this.camera.position.z = Math.min(200, this.camera.position.z + 0.5); 
+            }
+
+            State.lastHandX = handX;
+        } else {
+            this.scene.rotation.y += 0.001; // Idle spin
+        }
+
+        // --- PARTICLE BEHAVIOR ---
         for(let i=0; i<count; i++) {
             const idx = i*3;
             let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
@@ -353,8 +376,6 @@ const Visuals = {
                         vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
                         col[idx]=0; col[idx+1]=1; col[idx+2]=0;
                      }
-                } else if (State.gesture === 'PINCH') {
-                    vx *= 0.1; vy *= 0.1; vz *= 0.1;
                 } else if (State.gesture === 'CHAOS') {
                     if(distSq < 6400) {
                         vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
@@ -362,6 +383,7 @@ const Visuals = {
                     }
                 }
             } else {
+                // Return to Blue color when idle
                 col[idx] = col[idx]*0.9 + 0;
                 col[idx+1] = col[idx+1]*0.9 + 0.1;
                 col[idx+2] = col[idx+2]*0.9 + 0.1;
@@ -378,46 +400,72 @@ const Visuals = {
     }
 };
 
-// --- GESTURE RECOGNITION ---
+/* ================================================================
+   HAND TRACKING ENGINE (GESTURE RECOGNITION)
+   ================================================================
+*/
 function detectGesture(lm) {
     const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
     const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
+    const isExtended = (tip, lower) => dist(tip, wrist) > dist(lower, wrist);
 
-    if (dist(thumb, index) < 0.04) return 'PINCH';
-    const avgTip = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
-    if (avgTip < 0.25) return 'GRAVITY';
-    if (dist(index, wrist) > 0.4 && dist(mid, wrist) < 0.25) return 'POINT';
-    if (dist(index, wrist) > 0.3 && dist(pinky, wrist) > 0.3 && dist(mid, wrist) < 0.25) return 'CHAOS';
+    const indexUp = isExtended(8, 5);
+    const midUp = isExtended(12, 9);
+    const ringUp = isExtended(16, 13);
+    const pinkyUp = isExtended(20, 17);
+
+    // 1. PINCH (Rotate)
+    if (dist(thumb, index) < 0.05) return 'PINCH';
+
+    // 2. PEACE / VICTORY (Zoom In)
+    if (indexUp && midUp && !ringUp && !pinkyUp) return 'ZOOM_IN';
+
+    // 3. THREE FINGERS (Zoom Out)
+    if (indexUp && midUp && ringUp && !pinkyUp) return 'ZOOM_OUT';
+
+    // 4. FIST (Gravity)
+    const tipsOpen = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
+    if (tipsOpen < 0.25) return 'GRAVITY';
+
+    // 5. POINT (Tractor)
+    if (indexUp && !midUp && !ringUp && !pinkyUp) return 'POINT';
+
+    // 6. CHAOS (Spiderman)
+    if (indexUp && !midUp && !ringUp && pinkyUp) return 'CHAOS';
+
     return 'BLAST';
 }
 
 function updateHUD(gesture) {
     document.querySelectorAll('.cmd-item').forEach(el => el.classList.remove('cmd-active'));
+    
     if(gesture === 'BLAST') document.getElementById('cmd-palm').classList.add('cmd-active');
     if(gesture === 'GRAVITY') document.getElementById('cmd-fist').classList.add('cmd-active');
     if(gesture === 'POINT') document.getElementById('cmd-point').classList.add('cmd-active');
-    if(gesture === 'PINCH') document.getElementById('cmd-pinch').classList.add('cmd-active');
+    if(gesture === 'PINCH' || gesture === 'ZOOM_IN' || gesture === 'ZOOM_OUT') document.getElementById('cmd-pinch').classList.add('cmd-active');
     if(gesture === 'CHAOS') document.getElementById('cmd-rock').classList.add('cmd-active');
+    
     UI.gestureStatus.innerText = gesture;
 }
 
 // --- INITIALIZATION ---
-document.getElementById('start-btn').addEventListener('click', () => {
+UI.overlay.querySelector('button').addEventListener('click', () => {
+    SFX.play(SFX.boot);
     UI.overlay.style.display = 'none';
-    SFX.init();
-    Brain.init();
     Visuals.init();
-    Visuals.animate();
+    Brain.init();
 
-    const video = document.getElementById('video-input');
-    const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    // Start Camera
+    const video = document.createElement('video');
+    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
     
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
-
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+    
     hands.onResults(results => {
-        if (results.multiHandLandmarks.length > 0) {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             State.handActive = true;
             const lm = results.multiHandLandmarks[0];
+            
             const x = (0.5 - lm[9].x) * 160;
             const y = (0.5 - lm[9].y) * 100;
             State.handPos.set(x, y, 0);
@@ -434,6 +482,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
             UI.reticle.style.display = 'none';
             updateHUD('IDLE');
         }
+        
         SFX.update(State.gesture);
     });
 
@@ -448,14 +497,11 @@ document.getElementById('start-btn').addEventListener('click', () => {
     });
 });
 
+// Handle resize
 window.addEventListener('resize', () => {
     if(Visuals.camera) {
         Visuals.camera.aspect = window.innerWidth / window.innerHeight;
         Visuals.camera.updateProjectionMatrix();
         Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
-        Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
-
-
-
