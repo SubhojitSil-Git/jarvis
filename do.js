@@ -2,20 +2,53 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /* ================================================================
-   CONFIGURATION
+   LOCAL INTELLIGENCE DATABASE
    ================================================================
-   ⚠️ REPLACE THIS WITH YOUR NEW KEY! THE OLD ONE WAS LEAKED.
+   How to add more: 
+   "keyword": ["Response 1", "Response 2", "Response 3"]
 */
-const GEMINI_API_KEY = "AIzaSyBYoj9_C9ZuejPuzlrMiT2pye9-Pc91978"; 
+const LOCAL_DB = {
+    // --- GREETINGS ---
+    "hello": ["Greetings, sir.", "Online and ready.", "At your service."],
+    "hi": ["Hello there.", "Systems operational."],
+    "wake": ["I am awake.", "Sleep mode disabled.", "Powering up main core."],
+    "jarvis": ["Yes, sir?", "Awaiting instructions.", "I am here."],
+    "there": ["Always here, sir.", "Watching your back."],
+
+    // --- SYSTEM STATUS ---
+    "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active."],
+    "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green."],
+    "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean."],
+    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "It is currently " + new Date().getHours() + " hundred hours."],
+
+    // --- COMBAT & AGGRESSION ---
+    "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online."],
+    "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir."],
+    "destroy": ["Maximum firepower authorized.", "Reducing target to ash."],
+    "attack": [" engaging hostiles.", "Suppressive fire initiated."],
+    "fire": ["Discharging payload.", "Firing main cannon."],
+    "relax": ["Standing down.", "Combat mode disengaged.", "Cooling down weapons."],
+
+    // --- PERSONALITY & CHIT CHAT ---
+    "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler."],
+    "god": ["I am not a god, simply a very advanced script.", "You are the creator, sir."],
+    "joke": ["I am not programmed for humor, but... why did the robot cross the road? Because he was programmed to.", "404 Error: Humor not found."],
+    "thanks": ["You are welcome.", "My pleasure."],
+    "cool": ["Indeed.", "Technologically superior.", "I try my best."],
+    "love": ["My emotional subroutines are... limited.", "I am fond of you as well, sir."],
+
+    // --- GESTURE SPECIFIC (Triggered by voice too) ---
+    "hand": ["Visual sensors tracking hand movements.", "Interface active."],
+    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."]
+};
 
 // --- STATE MANAGEMENT ---
 const State = {
     handActive: false,
     handPos: new THREE.Vector3(0,0,0),
-    gesture: 'IDLE', // BLAST, GRAVITY, POINT, PINCH, CHAOS
+    gesture: 'IDLE', 
     combatMode: false,
     voiceActive: false
 };
@@ -89,22 +122,14 @@ const SFX = {
     }
 };
 
-// --- AI BRAIN (GOOGLE SDK VERSION) ---
+// --- AI BRAIN (LOCAL OFFLINE VERSION) ---
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
-    genAI: null,
-    model: null,
 
     init: function() {
-        // 1. Initialize Google AI
-        if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
-            this.genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-            this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            UI.aiStatus.innerText = "BRAIN: GEMINI SDK";
-        }
+        UI.aiStatus.innerText = "BRAIN: LOCAL CORE";
 
-        // 2. Initialize Microphone
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             this.recognition = new SpeechRecognition();
@@ -114,7 +139,7 @@ const Brain = {
 
             this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
             
-            // SAFETY FIX: Prevent infinite crash loop
+            // Prevent crash loop
             this.recognition.onend = () => {
                 setTimeout(() => { try{this.recognition.start();}catch(e){} }, 1000);
             };
@@ -141,40 +166,57 @@ const Brain = {
         UI.subtitles.innerText = `JARVIS: ${text}`;
     },
 
-    processInput: async function(rawText) {
+    // --- THE LOGIC ENGINE ---
+    processInput: function(rawText) {
         const text = rawText.toLowerCase().trim();
         UI.subtitles.innerText = `YOU: ${text}`;
         if(text.length < 2) return;
 
-        // LOCAL OVERRIDES (Speed)
-        if (text.includes('combat')) { 
+        // 1. COMBAT OVERRIDES (Visual)
+        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) { 
             State.combatMode = true; 
             UI.body.classList.add('combat');
-            this.speak("Combat protocols engaged."); 
-            return; 
         }
-        if (text.includes('relax')) { 
+        if (text.includes('relax') || text.includes('stand down')) { 
             State.combatMode = false; 
             UI.body.classList.remove('combat');
-            this.speak("Standing down."); 
-            return; 
         }
 
-        // REAL AI CALL
-        if (this.model) {
-            try {
-                const prompt = `You are JARVIS. Current gesture: ${State.gesture}. User says: "${text}". Keep reply short, cool, and robotic.`;
-                const result = await this.model.generateContent(prompt);
-                const response = await result.response;
-                const aiText = response.text();
+        // 2. SEARCH DATABASE
+        let found = false;
+        const keys = Object.keys(LOCAL_DB);
+        
+        // Check every keyword in our DB to see if it exists in the user's sentence
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (text.includes(key)) {
+                const options = LOCAL_DB[key];
+                let response = "";
                 
-                this.speak(aiText);
-            } catch(e) {
-                console.error("AI Error:", e);
-                this.speak("I am having trouble connecting to the servers, sir.");
+                // Handle dynamic functions (like Time) or Text Arrays
+                const selected = options[Math.floor(Math.random() * options.length)];
+                if (typeof selected === 'function') {
+                    response = selected();
+                } else {
+                    response = selected;
+                }
+
+                this.speak(response);
+                found = true;
+                break; // Stop after first match
             }
-        } else {
-            this.speak("My API key is missing. Please check the code.");
+        }
+
+        // 3. FALLBACK (If no keyword matched)
+        if (!found) {
+            const fallbacks = [
+                "Processing...", 
+                "Can you repeat that?", 
+                "Data unclear.", 
+                "I am listening.",
+                "Systems are idling."
+            ];
+            this.speak(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
         }
     }
 };
@@ -189,16 +231,14 @@ const Visuals = {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         this.camera.position.z = 80;
 
-        // OPTIMIZATION: Lower pixel ratio for speed
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap resolution
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
         document.body.appendChild(this.renderer.domElement);
 
-        // Bloom (Kept but optimized)
         const renderScene = new RenderPass(this.scene, this.camera);
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloom.strength = 1.5; bloom.radius = 0.5; // Slightly lower strength
+        bloom.strength = 1.5; bloom.radius = 0.5;
         
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
@@ -208,7 +248,6 @@ const Visuals = {
     },
 
     createParticles: function() {
-        // OPTIMIZATION: Reduced from 8000 to 4000 (Faster!)
         const count = 4000; 
         const positions = new Float32Array(count * 3);
         const velocities = new Float32Array(count * 3);
@@ -245,7 +284,7 @@ const Visuals = {
         this.scene.add(this.particles);
         this.origins = origins;
         this.velocities = velocities;
-        this.count = count; // Save count for loop
+        this.count = count; 
     },
 
     animate: function() {
@@ -263,32 +302,28 @@ const Visuals = {
             let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
             let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
 
-            // 1. Elastic Return (Simplified Math)
             vx += (this.origins[idx] - px) * 0.02;
             vy += (this.origins[idx+1] - py) * 0.02;
             vz += (this.origins[idx+2] - pz) * 0.02;
 
-            // 2. Interaction (Optimized Checks)
             if(State.handActive) {
                 const dx = px - handX, dy = py - handY, dz = pz - handZ;
-                // Optimization: Check Squared Distance first to avoid Math.sqrt calculation
                 const distSq = dx*dx + dy*dy + dz*dz;
 
                 if (State.gesture === 'BLAST') {
-                    if(distSq < 3600) { // 60^2
+                    if(distSq < 3600) { 
                         const dist = Math.sqrt(distSq);
-                        const f = 800 / (dist + 1); // Reduced force slightly
+                        const f = 800 / (dist + 1); 
                         vx += (dx/dist)*f; vy += (dy/dist)*f; vz += (dz/dist)*f;
                         col[idx]=1; col[idx+1]=1; col[idx+2]=1;
                     }
                 } else if (State.gesture === 'GRAVITY') {
-                    if(distSq < 10000) { // 100^2
+                    if(distSq < 10000) { 
                         const dist = Math.sqrt(distSq);
                         vx -= (dx/dist)*2; vy -= (dy/dist)*2; vz -= (dz/dist)*2;
                         col[idx]=1; col[idx+1]=0.5; col[idx+2]=0;
                     }
                 } else if (State.gesture === 'POINT') {
-                     // Only calculate if near hand (simple box check)
                      if(Math.abs(dx) < 20 && Math.abs(dy) < 20) {
                         vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
                         col[idx]=0; col[idx+1]=1; col[idx+2]=0;
@@ -302,7 +337,6 @@ const Visuals = {
                     }
                 }
             } else {
-                // Fast Color Restore
                 col[idx] = col[idx]*0.9 + 0;
                 col[idx+1] = col[idx+1]*0.9 + 0.1;
                 col[idx+2] = col[idx+2]*0.9 + 0.1;
@@ -397,5 +431,3 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
-
-
