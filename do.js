@@ -179,7 +179,7 @@ const Brain = {
     }
 };
 
-// --- VISUAL CORE (THREE.JS) ---
+// --- VISUAL CORE (OPTIMIZED) ---
 const Visuals = {
     scene: null, camera: null, renderer: null, composer: null,
     particles: null, particleGeo: null,
@@ -189,15 +189,16 @@ const Visuals = {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         this.camera.position.z = 80;
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: false });
+        // OPTIMIZATION: Lower pixel ratio for speed
+        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Cap resolution
         document.body.appendChild(this.renderer.domElement);
 
-        // Bloom
+        // Bloom (Kept but optimized)
         const renderScene = new RenderPass(this.scene, this.camera);
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloom.strength = 2.0; bloom.radius = 0.5;
+        bloom.strength = 1.5; bloom.radius = 0.5; // Slightly lower strength
         
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
@@ -207,7 +208,8 @@ const Visuals = {
     },
 
     createParticles: function() {
-        const count = 8000;
+        // OPTIMIZATION: Reduced from 8000 to 4000 (Faster!)
+        const count = 4000; 
         const positions = new Float32Array(count * 3);
         const velocities = new Float32Array(count * 3);
         const origins = new Float32Array(count * 3);
@@ -243,6 +245,7 @@ const Visuals = {
         this.scene.add(this.particles);
         this.origins = origins;
         this.velocities = velocities;
+        this.count = count; // Save count for loop
     },
 
     animate: function() {
@@ -253,50 +256,56 @@ const Visuals = {
         const handX = State.handPos.x;
         const handY = State.handPos.y;
         const handZ = State.handPos.z;
+        const count = this.count;
 
-        for(let i=0; i<8000; i++) {
+        for(let i=0; i<count; i++) {
             const idx = i*3;
             let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
             let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
 
-            // Return force
-            vx += (this.origins[idx] - px) * 0.015;
-            vy += (this.origins[idx+1] - py) * 0.015;
-            vz += (this.origins[idx+2] - pz) * 0.015;
+            // 1. Elastic Return (Simplified Math)
+            vx += (this.origins[idx] - px) * 0.02;
+            vy += (this.origins[idx+1] - py) * 0.02;
+            vz += (this.origins[idx+2] - pz) * 0.02;
 
-            // Interaction
+            // 2. Interaction (Optimized Checks)
             if(State.handActive) {
                 const dx = px - handX, dy = py - handY, dz = pz - handZ;
-                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                // Optimization: Check Squared Distance first to avoid Math.sqrt calculation
+                const distSq = dx*dx + dy*dy + dz*dz;
 
                 if (State.gesture === 'BLAST') {
-                    if(dist < 60) {
-                        const f = 1000 / (dist + 1);
+                    if(distSq < 3600) { // 60^2
+                        const dist = Math.sqrt(distSq);
+                        const f = 800 / (dist + 1); // Reduced force slightly
                         vx += (dx/dist)*f; vy += (dy/dist)*f; vz += (dz/dist)*f;
                         col[idx]=1; col[idx+1]=1; col[idx+2]=1;
                     }
                 } else if (State.gesture === 'GRAVITY') {
-                    if(dist < 100) {
+                    if(distSq < 10000) { // 100^2
+                        const dist = Math.sqrt(distSq);
                         vx -= (dx/dist)*2; vy -= (dy/dist)*2; vz -= (dz/dist)*2;
                         col[idx]=1; col[idx+1]=0.5; col[idx+2]=0;
                     }
                 } else if (State.gesture === 'POINT') {
-                    if(Math.sqrt(dx*dx+dy*dy) < 15) {
+                     // Only calculate if near hand (simple box check)
+                     if(Math.abs(dx) < 20 && Math.abs(dy) < 20) {
                         vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
                         col[idx]=0; col[idx+1]=1; col[idx+2]=0;
-                    }
+                     }
                 } else if (State.gesture === 'PINCH') {
                     vx *= 0.1; vy *= 0.1; vz *= 0.1;
                 } else if (State.gesture === 'CHAOS') {
-                    if(dist < 80) {
+                    if(distSq < 6400) {
                         vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
                         col[idx]=1; col[idx+1]=0; col[idx+2]=1;
                     }
                 }
             } else {
-                col[idx] = col[idx]*0.95 + 0;
-                col[idx+1] = col[idx+1]*0.95 + 1;
-                col[idx+2] = col[idx+2]*0.95 + 1;
+                // Fast Color Restore
+                col[idx] = col[idx]*0.9 + 0;
+                col[idx+1] = col[idx+1]*0.9 + 0.1;
+                col[idx+2] = col[idx+2]*0.9 + 0.1;
             }
 
             vx *= 0.9; vy *= 0.9; vz *= 0.9;
@@ -388,4 +397,5 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
 
