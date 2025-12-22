@@ -9,7 +9,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
    ================================================================
    ⚠️ REPLACE THIS WITH YOUR NEW KEY! THE OLD ONE WAS LEAKED.
 */
-const GEMINI_API_KEY = "PASTE_NEW_KEY_HERE"; 
+const GEMINI_API_KEY = "AIzaSyBYoj9_C9ZuejPuzlrMiT2pye9-Pc91978"; 
 
 // --- STATE MANAGEMENT ---
 const State = {
@@ -388,3 +388,4 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
