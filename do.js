@@ -19,7 +19,7 @@ const LOCAL_DB = {
     "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active."],
     "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green."],
     "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean."],
-    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "It is currently " + new Date().getHours() + " hundred hours."],
+    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "It is currently " + new Date().getHours() + " O'clock."],
 
     // --- COMBAT & AGGRESSION ---
     "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online."],
@@ -456,5 +456,6 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
 
 
