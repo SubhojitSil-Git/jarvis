@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /* ================================================================
    CONFIGURATION
    ================================================================
-   To enable "God Mode" (Real AI), get a key from aistudio.google.com
-   and paste it inside the quotes below.
+   ⚠️ REPLACE THIS WITH YOUR NEW KEY! THE OLD ONE WAS LEAKED.
 */
-const GEMINI_API_KEY = ""; 
+const GEMINI_API_KEY = "PASTE_NEW_KEY_HERE"; 
 
 // --- STATE MANAGEMENT ---
 const State = {
@@ -33,12 +33,7 @@ const UI = {
 
 // --- AUDIO ENGINE (SOUND EFFECTS) ---
 const SFX = {
-    ctx: null,
-    gain: null,
-    humOsc: null,
-    noiseNode: null,
-    noiseFilter: null,
-    noiseGain: null,
+    ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
 
     init: function() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -47,14 +42,12 @@ const SFX = {
         this.gain.connect(this.ctx.destination);
         this.gain.gain.value = 0.4;
 
-        // 1. Idle Drone
         this.humOsc = this.ctx.createOscillator();
         this.humOsc.type = 'sine';
         this.humOsc.frequency.value = 60;
         this.humOsc.connect(this.gain);
         this.humOsc.start();
 
-        // 2. Thruster Noise
         const bufferSize = this.ctx.sampleRate * 2;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -84,10 +77,10 @@ const SFX = {
             this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
             this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
         } else if (gesture === 'GRAVITY') {
-            this.humOsc.frequency.setTargetAtTime(150, now, 0.1); // Charge up
+            this.humOsc.frequency.setTargetAtTime(150, now, 0.1);
             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
         } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05); // High pitch laser
+             this.humOsc.frequency.setTargetAtTime(800, now, 0.05);
              this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
         } else {
             this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
@@ -96,12 +89,22 @@ const SFX = {
     }
 };
 
-// --- AI BRAIN (VOICE & LLM) ---
+// --- AI BRAIN (GOOGLE SDK VERSION) ---
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
+    genAI: null,
+    model: null,
 
     init: function() {
+        // 1. Initialize Google AI
+        if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
+            this.genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+            this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            UI.aiStatus.innerText = "BRAIN: GEMINI SDK";
+        }
+
+        // 2. Initialize Microphone
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             this.recognition = new SpeechRecognition();
@@ -110,12 +113,19 @@ const Brain = {
             this.recognition.interimResults = false;
 
             this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
-            this.recognition.onend = () => this.recognition.start(); 
-            this.recognition.onresult = (e) => this.processInput(e.results[e.results.length-1][0].transcript);
-            this.recognition.start();
+            
+            // SAFETY FIX: Prevent infinite crash loop
+            this.recognition.onend = () => {
+                setTimeout(() => { try{this.recognition.start();}catch(e){} }, 1000);
+            };
+
+            this.recognition.onresult = (e) => {
+                const transcript = e.results[e.results.length-1][0].transcript;
+                this.processInput(transcript);
+            };
+            
+            try { this.recognition.start(); } catch(e) { console.warn("Mic active"); }
         }
-        
-        if(GEMINI_API_KEY) UI.aiStatus.innerText = "GEMINI CLOUD";
     },
 
     speak: function(text) {
@@ -123,7 +133,6 @@ const Brain = {
         const utter = new SpeechSynthesisUtterance(text);
         utter.pitch = 0.8; utter.rate = 1.1; 
         
-        // Try to find a male/robotic voice
         const voices = this.synth.getVoices();
         const v = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Daniel'));
         if(v) utter.voice = v;
@@ -135,52 +144,37 @@ const Brain = {
     processInput: async function(rawText) {
         const text = rawText.toLowerCase().trim();
         UI.subtitles.innerText = `YOU: ${text}`;
+        if(text.length < 2) return;
 
-        // 1. Check for Hardcoded Commands first (Faster)
-        if (text.includes('combat') || text.includes('kill mode')) {
-            State.combatMode = true;
+        // LOCAL OVERRIDES (Speed)
+        if (text.includes('combat')) { 
+            State.combatMode = true; 
             UI.body.classList.add('combat');
-            this.speak("Combat protocols engaged.");
-            return;
+            this.speak("Combat protocols engaged."); 
+            return; 
         }
-        if (text.includes('relax') || text.includes('stand down')) {
-            State.combatMode = false;
+        if (text.includes('relax')) { 
+            State.combatMode = false; 
             UI.body.classList.remove('combat');
-            this.speak("Systems returning to standard configuration.");
-            return;
+            this.speak("Standing down."); 
+            return; 
         }
 
-        // 2. Intelligent Response (Gemini or Fallback)
-        if (GEMINI_API_KEY) {
-            // Context injection: Tell the AI what the hand is doing
-            const contextPrompt = `You are JARVIS. User is performing gesture: ${State.gesture}. Hand visible: ${State.handActive}. User says: "${text}". Keep reply short and tactical.`;
-            
+        // REAL AI CALL
+        if (this.model) {
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: contextPrompt }] }] })
-                });
-                const data = await response.json();
-                const aiReply = data.candidates[0].content.parts[0].text;
-                this.speak(aiReply);
+                const prompt = `You are JARVIS. Current gesture: ${State.gesture}. User says: "${text}". Keep reply short, cool, and robotic.`;
+                const result = await this.model.generateContent(prompt);
+                const response = await result.response;
+                const aiText = response.text();
+                
+                this.speak(aiText);
             } catch(e) {
-                console.error(e);
-                this.speak("Unable to reach cloud servers, sir.");
+                console.error("AI Error:", e);
+                this.speak("I am having trouble connecting to the servers, sir.");
             }
         } else {
-            // Offline Fallback Logic
-            if (text.includes('status')) {
-                if(State.gesture === 'boom') this.speak("Repulsor systems charged and active.");
-                else if(State.gesture === 'gravity') this.speak("Gravity well generators at maximum.");
-                else this.speak("Systems nominal. Waiting for gesture input.");
-            } 
-            else if (text.includes('hello') || text.includes('jarvis')) {
-                this.speak("Online. Ready for instructions.");
-            }
-            else {
-                this.speak("Command not recognized in offline mode.");
-            }
+            this.speak("My API key is missing. Please check the code.");
         }
     }
 };
@@ -218,11 +212,10 @@ const Visuals = {
         const velocities = new Float32Array(count * 3);
         const origins = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
-
         const colorBase = new THREE.Color(0x00ffff);
 
         for(let i=0; i<count; i++) {
-            const r = 30 + Math.random() * 60; // Sphere cloud
+            const r = 30 + Math.random() * 60;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             
@@ -232,7 +225,6 @@ const Visuals = {
 
             positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
             origins[i*3] = x; origins[i*3+1] = y; origins[i*3+2] = z;
-            
             colors[i*3] = colorBase.r; colors[i*3+1] = colorBase.g; colors[i*3+2] = colorBase.b;
         }
 
@@ -249,6 +241,8 @@ const Visuals = {
         this.particles = new THREE.Points(geometry, mat);
         this.particleGeo = geometry;
         this.scene.add(this.particles);
+        this.origins = origins;
+        this.velocities = velocities;
     },
 
     animate: function() {
@@ -256,58 +250,14 @@ const Visuals = {
         
         const pos = this.particleGeo.attributes.position.array;
         const col = this.particleGeo.attributes.color.array;
-        
-        // Physics Loop
-        for(let i=0; i<8000; i++) {
-            const idx = i*3;
-            let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
-            
-            // 1. Elastic Return to Origin
-            // If combat mode, explode outward slightly
-            const ox = State.combatMode ? this.particleGeo.attributes.position.array[idx] * 1.5 : 0; // Simplified for stability
-            
-            // Using a simpler return logic for stability
-            // Note: In real app, we need the stored 'origins' array accessible here. 
-            // For brevity in module scope, we cheat slightly or access via visual object if stored correctly.
-            // Let's rely on visual chaos for now.
-        }
-        
-        // NOTE: For performance in this modular format, I'm using a simplified physics shader logic
-        // re-implemented fully below to ensure it matches the "Heavy Artillery" feel.
-        
-        this.updatePhysics(); // Call the detailed physics
-        this.composer.render();
-    },
-    
-    // Re-injecting the detailed physics engine here
-    updatePhysics: function() {
-        const positions = this.particles.geometry.attributes.position.array;
-        const colors = this.particles.geometry.attributes.color.array;
-        // We need to access origins which we created in createParticles. 
-        // In a strict module, we'd store them in `this`. 
-        // For this single-file module logic, we'll reconstruct the flow.
-        
-        // *Re-initializing origins for the loop scope*
-        if(!this.origins) {
-             this.origins = new Float32Array(positions.length);
-             this.velocities = new Float32Array(positions.length);
-             for(let k=0; k<positions.length; k++) this.origins[k] = positions[k];
-        }
-
         const handX = State.handPos.x;
         const handY = State.handPos.y;
         const handZ = State.handPos.z;
 
-        const targetColor = State.combatMode ? {r:1, g:0, b:0} : {r:0, g:1, b:1};
-
         for(let i=0; i<8000; i++) {
             const idx = i*3;
-            let px = positions[idx];
-            let py = positions[idx+1];
-            let pz = positions[idx+2];
-            let vx = this.velocities[idx];
-            let vy = this.velocities[idx+1];
-            let vz = this.velocities[idx+2];
+            let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
+            let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
 
             // Return force
             vx += (this.origins[idx] - px) * 0.015;
@@ -316,54 +266,47 @@ const Visuals = {
 
             // Interaction
             if(State.handActive) {
-                const dx = px - handX;
-                const dy = py - handY;
-                const dz = pz - handZ;
+                const dx = px - handX, dy = py - handY, dz = pz - handZ;
                 const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
                 if (State.gesture === 'BLAST') {
                     if(dist < 60) {
                         const f = 1000 / (dist + 1);
-                        vx += (dx/dist) * f; vy += (dy/dist) * f; vz += (dz/dist) * f;
-                        colors[idx]=1; colors[idx+1]=1; colors[idx+2]=1; // White hot
+                        vx += (dx/dist)*f; vy += (dy/dist)*f; vz += (dz/dist)*f;
+                        col[idx]=1; col[idx+1]=1; col[idx+2]=1;
                     }
                 } else if (State.gesture === 'GRAVITY') {
                     if(dist < 100) {
-                        vx -= (dx/dist) * 2; vy -= (dy/dist) * 2; vz -= (dz/dist) * 2;
-                        colors[idx]=1; colors[idx+1]=0.5; colors[idx+2]=0; // Orange
+                        vx -= (dx/dist)*2; vy -= (dy/dist)*2; vz -= (dz/dist)*2;
+                        col[idx]=1; col[idx+1]=0.5; col[idx+2]=0;
                     }
                 } else if (State.gesture === 'POINT') {
-                    const distBeam = Math.sqrt(dx*dx + dy*dy);
-                    if (distBeam < 15) {
-                        vx += (handX - px)*0.2; vy += (handY - py)*0.2; vz += 5; // Shoot forward
-                        colors[idx]=0; colors[idx+1]=1; colors[idx+2]=0; // Green
+                    if(Math.sqrt(dx*dx+dy*dy) < 15) {
+                        vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
+                        col[idx]=0; col[idx+1]=1; col[idx+2]=0;
                     }
                 } else if (State.gesture === 'PINCH') {
-                    vx *= 0.1; vy *= 0.1; vz *= 0.1; // Freeze
+                    vx *= 0.1; vy *= 0.1; vz *= 0.1;
                 } else if (State.gesture === 'CHAOS') {
                     if(dist < 80) {
                         vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
-                        colors[idx]=1; colors[idx+1]=0; colors[idx+2]=1; // Purple
+                        col[idx]=1; col[idx+1]=0; col[idx+2]=1;
                     }
                 }
             } else {
-                // Restore color
-                colors[idx] = colors[idx]*0.95 + targetColor.r*0.05;
-                colors[idx+1] = colors[idx+1]*0.95 + targetColor.g*0.05;
-                colors[idx+2] = colors[idx+2]*0.95 + targetColor.b*0.05;
+                col[idx] = col[idx]*0.95 + 0;
+                col[idx+1] = col[idx+1]*0.95 + 1;
+                col[idx+2] = col[idx+2]*0.95 + 1;
             }
 
-            // Friction & Apply
             vx *= 0.9; vy *= 0.9; vz *= 0.9;
-            positions[idx] = px + vx;
-            positions[idx+1] = py + vy;
-            positions[idx+2] = pz + vz;
-            
+            pos[idx] = px + vx; pos[idx+1] = py + vy; pos[idx+2] = pz + vz;
             this.velocities[idx] = vx; this.velocities[idx+1] = vy; this.velocities[idx+2] = vz;
         }
 
-        this.particles.geometry.attributes.position.needsUpdate = true;
-        this.particles.geometry.attributes.color.needsUpdate = true;
+        this.particleGeo.attributes.position.needsUpdate = true;
+        this.particleGeo.attributes.color.needsUpdate = true;
+        this.composer.render();
     }
 };
 
@@ -372,33 +315,21 @@ function detectGesture(lm) {
     const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
     const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
 
-    // 1. PINCH (Index touches Thumb)
     if (dist(thumb, index) < 0.04) return 'PINCH';
-
-    // 2. FIST (Fingertips close to wrist)
     const avgTip = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
     if (avgTip < 0.25) return 'GRAVITY';
-
-    // 3. POINT (Index extended, others curled)
-    if (dist(index, wrist) > 0.4 && dist(mid, wrist) < 0.25 && dist(ring, wrist) < 0.25) return 'POINT';
-
-    // 4. CHAOS (Rock sign: Index + Pinky up)
+    if (dist(index, wrist) > 0.4 && dist(mid, wrist) < 0.25) return 'POINT';
     if (dist(index, wrist) > 0.3 && dist(pinky, wrist) > 0.3 && dist(mid, wrist) < 0.25) return 'CHAOS';
-
-    // 5. Default
     return 'BLAST';
 }
 
 function updateHUD(gesture) {
-    // Reset all
     document.querySelectorAll('.cmd-item').forEach(el => el.classList.remove('cmd-active'));
-    
     if(gesture === 'BLAST') document.getElementById('cmd-palm').classList.add('cmd-active');
     if(gesture === 'GRAVITY') document.getElementById('cmd-fist').classList.add('cmd-active');
     if(gesture === 'POINT') document.getElementById('cmd-point').classList.add('cmd-active');
     if(gesture === 'PINCH') document.getElementById('cmd-pinch').classList.add('cmd-active');
     if(gesture === 'CHAOS') document.getElementById('cmd-rock').classList.add('cmd-active');
-
     UI.gestureStatus.innerText = gesture;
 }
 
@@ -413,24 +344,16 @@ document.getElementById('start-btn').addEventListener('click', () => {
     const video = document.getElementById('video-input');
     const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
     
-    hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.5
-    });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
 
     hands.onResults(results => {
         if (results.multiHandLandmarks.length > 0) {
             State.handActive = true;
             const lm = results.multiHandLandmarks[0];
-            
-            // Map to 3D space
             const x = (0.5 - lm[9].x) * 160;
             const y = (0.5 - lm[9].y) * 100;
             State.handPos.set(x, y, 0);
 
-            // Reticle UI
             UI.reticle.style.display = 'block';
             UI.reticle.style.left = ((1 - lm[9].x) * window.innerWidth) + 'px';
             UI.reticle.style.top = (lm[9].y * window.innerHeight) + 'px';
@@ -443,7 +366,6 @@ document.getElementById('start-btn').addEventListener('click', () => {
             UI.reticle.style.display = 'none';
             updateHUD('IDLE');
         }
-        
         SFX.update(State.gesture);
     });
 
@@ -458,7 +380,6 @@ document.getElementById('start-btn').addEventListener('click', () => {
     });
 });
 
-// Handle resize
 window.addEventListener('resize', () => {
     if(Visuals.camera) {
         Visuals.camera.aspect = window.innerWidth / window.innerHeight;
@@ -467,7 +388,3 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
-
-
-
-
