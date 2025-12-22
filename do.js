@@ -42,6 +42,33 @@ const LOCAL_DB = {
     // --- GESTURE SPECIFIC (Triggered by voice too) ---
     "hand": ["Visual sensors tracking hand movements.", "Interface active."],
     "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."]
+   // --- SHUTDOWN PROTOCOL ---
+    "sleep": [
+        function() {
+            // 1. Trigger Visual Shutdown after 2 seconds (allows him to speak first)
+            setTimeout(() => {
+                // Fade out everything
+                document.body.style.transition = "opacity 3s";
+                document.body.style.opacity = "0";
+                document.body.style.pointerEvents = "none";
+                
+                // Stop the Mic
+                if(Brain.recognition) Brain.recognition.abort();
+                
+                // Optional: Reload page after 5 seconds to "Restart"
+                setTimeout(() => location.reload(), 5000);
+            }, 1500);
+
+            return "Goodnight, sir. Powering down main systems.";
+        },
+        "Initiating sleep mode. Goodbye.",
+        "System shutdown sequence engaged."
+    ],
+    
+    "off": ["Turning off visual interface.", function(){ 
+        setTimeout(() => document.body.style.opacity = "0", 1000);
+        return "Going dark."; 
+    }]
 };
 
 // --- STATE MANAGEMENT ---
@@ -431,3 +458,4 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
