@@ -9,7 +9,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
    To enable "God Mode" (Real AI), get a key from aistudio.google.com
    and paste it inside the quotes below.
 */
-const GEMINI_API_KEY = "AIzaSyAWgbFSoRRvu-akBtTZFDqbhdEQTyWh8g8"; 
+const GEMINI_API_KEY = ""; 
 
 // --- STATE MANAGEMENT ---
 const State = {
@@ -467,6 +467,7 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
 
 
 
