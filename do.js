@@ -171,8 +171,8 @@ const Brain = {
         } else {
             // Offline Fallback Logic
             if (text.includes('status')) {
-                if(State.gesture === 'BLAST') this.speak("Repulsor systems charged and active.");
-                else if(State.gesture === 'GRAVITY') this.speak("Gravity well generators at maximum.");
+                if(State.gesture === 'boom') this.speak("Repulsor systems charged and active.");
+                else if(State.gesture === 'gravity') this.speak("Gravity well generators at maximum.");
                 else this.speak("Systems nominal. Waiting for gesture input.");
             } 
             else if (text.includes('hello') || text.includes('jarvis')) {
@@ -467,3 +467,4 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
