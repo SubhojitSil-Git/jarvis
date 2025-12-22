@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS MARK VI: SENTIENT</title>
-    <link rel="stylesheet" href="do.css">
+    <title>JARVIS MK.7 - GOD MODE</title>
     
+    <link rel="stylesheet" href="do.css">
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    
+
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
             }
         }
     </script>
@@ -24,9 +24,9 @@
 <body>
 
     <div id="start-overlay">
-        <div class="scanner-line"></div>
+        <h1 class="title">J.A.R.V.I.S.</h1>
         <button id="start-btn">INITIALIZE SYSTEM</button>
-        <div class="sys-msg">NEURAL LINK STANDBY...</div>
+        <p class="warning">Ensure Microphone and Camera permissions are allowed.</p>
     </div>
 
     <div id="hud-layer">
@@ -35,26 +35,26 @@
         <div id="subtitle-box">AWAITING INPUT...</div>
 
         <div class="hud-panel top-left">
-            <h1>JARVIS <span class="version">mk.6</span></h1>
-            <div class="row">VOICE: <span id="voice-status">OFFLINE</span></div>
-            <div class="row">GESTURE: <span id="gesture-status">NONE</span></div>
-            <div class="row">AI BRAIN: <span id="ai-status">LOCAL</span></div>
+            <h1>SYSTEM STATUS</h1>
+            <div class="row">VOICE: <span id="voice-status" style="color:red">OFFLINE</span></div>
+            <div class="row">GESTURE: <span id="gesture-status">IDLE</span></div>
+            <div class="row">BRAIN: <span id="ai-status">LOCAL CORE</span></div>
         </div>
 
         <div class="hud-panel bottom-right">
-            <h1>VISUAL INPUT</h1>
-            <div class="cmd-item" id="cmd-palm">[🖐 PALM] REPULSOR</div>
-            <div class="cmd-item" id="cmd-fist">[✊ FIST] GRAVITY</div>
-            <div class="cmd-item" id="cmd-point">[☝ POINT] LASER</div>
-            <div class="cmd-item" id="cmd-pinch">[👌 PINCH] FREEZE</div>
-            <div class="cmd-item" id="cmd-rock">[🤘 ROCK] CHAOS</div>
+            <h1>GESTURE CONTROLS</h1>
+            <div class="cmd-item" id="cmd-palm">[ 🖐 PALM ] BLAST</div>
+            <div class="cmd-item" id="cmd-fist">[ ✊ FIST ] GRAVITY</div>
+            <div class="cmd-item" id="cmd-pinch">[ 👌 PINCH ] ROTATE</div>
+            <div class="cmd-item" id="cmd-victory">[ ✌️ PEACE ] ZOOM IN</div>
+            <div class="cmd-item" id="cmd-three">[ 🖖 THREE ] ZOOM OUT</div>
+            <div class="cmd-item" id="cmd-point">[ ☝ POINT ] TRACTOR</div>
+            <div class="cmd-item" id="cmd-rock">[ 🤘 ROCK ] CHAOS</div>
         </div>
     </div>
 
-    <video id="video-input" playsinline></video>
+    <video id="video-input" style="display: none;"></video>
 
     <script type="module" src="do.js"></script>
 </body>
 </html>
-
-
