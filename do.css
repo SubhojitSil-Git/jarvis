@@ -1,0 +1,146 @@
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    background-color: #000; 
+    font-family: 'Segoe UI', sans-serif; 
+    user-select: none; 
+}
+
+canvas { display: block; }
+#video-input { display: none; } 
+
+/* --- HUD LAYER --- */
+#hud-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+    z-index: 10;
+}
+
+/* --- START SCREEN --- */
+#start-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(2, 8, 12, 0.98);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    pointer-events: all;
+}
+
+#start-btn {
+    background: rgba(0, 255, 255, 0.05);
+    color: #00ffff;
+    border: 2px solid #00ffff;
+    padding: 20px 60px;
+    font-size: 24px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    font-weight: 900;
+}
+
+#start-btn:hover { 
+    background: #00ffff; 
+    color: #000; 
+    box-shadow: 0 0 100px #00ffff;
+    transform: scale(1.05);
+}
+
+.sys-msg {
+    margin-top: 20px;
+    color: #008888;
+    font-family: 'Courier New';
+    font-size: 12px;
+    letter-spacing: 2px;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* --- HUD PANELS --- */
+.hud-panel {
+    position: absolute;
+    color: #00ffff;
+    padding: 20px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(0, 20, 30, 0.4);
+    backdrop-filter: blur(4px);
+    width: 250px;
+}
+
+.top-left { 
+    top: 40px; left: 40px; 
+    border-left: 4px solid #00ffff;
+    border-top-right-radius: 20px;
+}
+
+.bottom-right { 
+    bottom: 40px; right: 40px; 
+    text-align: right; 
+    border-right: 4px solid #00ffff;
+    border-bottom-left-radius: 20px;
+}
+
+h1 { margin: 0 0 10px 0; font-size: 20px; letter-spacing: 3px; font-weight: 300; border-bottom: 1px solid rgba(0,255,255,0.3); padding-bottom: 5px; }
+.version { font-size: 10px; vertical-align: top; color: #fff; }
+.row { font-size: 11px; margin-top: 5px; font-family: 'Courier New'; color: #aaddff; opacity: 0.8; }
+
+.cmd-item { 
+    font-size: 10px; font-family: 'Courier New'; color: #008888; margin-bottom: 4px; transition: color 0.2s; 
+}
+.cmd-active { color: #fff; text-shadow: 0 0 8px #fff; font-weight: bold; }
+
+/* --- SUBTITLES --- */
+#subtitle-box {
+    position: absolute;
+    bottom: 15%;
+    width: 100%;
+    text-align: center;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    text-shadow: 0 2px 4px #000;
+    opacity: 0.9;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.5), transparent);
+    padding: 10px 0;
+}
+
+/* --- RETICLE --- */
+#reticle {
+    position: absolute;
+    width: 150px; height: 150px;
+    border: 1px dashed rgba(0, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    pointer-events: none;
+    transition: width 0.2s, height 0.2s;
+}
+
+#reticle-inner {
+    position: absolute; top: 50%; left: 50%;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: #00ffff;
+    border-bottom-color: #00ffff;
+    animation: spin 3s linear infinite;
+    box-shadow: 0 0 15px rgba(0,255,255,0.2);
+}
+
+@keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* Combat Mode Override */
+.combat .hud-panel { border-color: #ff3333; color: #ff3333; }
+.combat .top-left { border-left-color: #ff3333; }
+.combat .bottom-right { border-right-color: #ff3333; }
+.combat #reticle-inner { border-top-color: #ff3333; border-bottom-color: #ff3333; box-shadow: 0 0 15px rgba(255, 50, 50, 0.4); }
+.combat #start-btn { color: #ff3333; border-color: #ff3333; }
