@@ -109,12 +109,27 @@ const Brain = {
             this.recognition.lang = 'en-US';
             this.recognition.interimResults = false;
 
-            this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
-            this.recognition.onend = () => this.recognition.start(); 
-            this.recognition.onresult = (e) => this.processInput(e.results[e.results.length-1][0].transcript);
+          this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
+
+// SAFETY FIX: Wait 1 second before restarting to prevent crashing
+this.recognition.onend = () => {
+    setTimeout(() => {
+        try {
             this.recognition.start();
+        } catch (e) {
+            console.log("Mic restart ignored");
         }
-        
+    }, 1000); 
+};
+
+this.recognition.onresult = (e) => this.processInput(e.results[e.results.length-1][0].transcript);
+
+// Initial start
+try {
+    this.recognition.start();
+} catch (e) {
+    console.error("Mic access denied or not supported");
+}
         if(GEMINI_API_KEY) UI.aiStatus.innerText = "GEMINI CLOUD";
     },
 
@@ -466,4 +481,5 @@ window.addEventListener('resize', () => {
         Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
+
 });
