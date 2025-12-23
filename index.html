@@ -1,56 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>JARVIS MK-VI</title>
-
-  <link rel="stylesheet" href="do.css" />
-
-  <!-- MediaPipe -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-
-  <!-- Three.js -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JARVIS MARK VI: HOLOGRAM</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
-
 <body>
 
-<div id="start-overlay">
-  <button id="start-btn">INITIALIZE SYSTEM</button>
-  <div class="sys-msg">NEURAL LINK STANDBY…</div>
-</div>
+    <div id="start-overlay">
+        <div class="glitch-wrapper">
+            <div class="glitch" data-text="JARVIS">JARVIS</div>
+        </div>
+        <button id="start-btn">INITIALIZE NEURAL LINK</button>
+        <div class="sys-msg">BIOMETRIC SCAN PENDING...</div>
+    </div>
 
-<div id="hud-layer">
-  <div id="reticle"><div id="reticle-inner"></div></div>
+    <div id="hud-layer">
+        <div id="reticle">
+            <div class="scan-line"></div>
+            <div id="reticle-inner"></div>
+        </div>
+        
+        <div id="subtitle-box">SYSTEMS OFFLINE</div>
 
-  <div id="subtitle-box">AWAITING INPUT…</div>
+        <div class="hud-panel top-left">
+            <div class="corner-acc"></div>
+            <h1>MARK VI <span class="version">SENTIENT</span></h1>
+            <div class="row">VOICE: <span id="voice-status">OFFLINE</span></div>
+            <div class="row">NEURAL: <span id="gesture-status">NONE</span></div>
+            <div class="row">CORE: <span id="ai-status">STABLE</span></div>
+        </div>
 
-  <div class="hud-panel top-left">
-    <h1>JARVIS <span class="version">mk.6</span></h1>
-    <div class="row">MODE: <span id="mode-status">NORMAL</span></div>
-    <div class="row">GESTURE: <span id="gesture-status">IDLE</span></div>
-  </div>
+        <div class="hud-panel bottom-right">
+            <div class="corner-acc-br"></div>
+            <h1>COMMAND MATRIX</h1>
+            <div class="cmd-item" id="cmd-palm">REPULSOR [PALM]</div>
+            <div class="cmd-item" id="cmd-fist">GRAVITY [FIST]</div>
+            <div class="cmd-item" id="cmd-pinch">MANIPULATE [PINCH]</div>
+            <div class="cmd-item" id="cmd-rock">CHAOS [ROCK]</div>
+        </div>
+    </div>
 
-  <div class="hud-panel bottom-right">
-    <h1>GESTURES</h1>
-    <div class="cmd-item">🖐 PALM — REPULSOR</div>
-    <div class="cmd-item">✊ FIST — GRAVITY</div>
-    <div class="cmd-item">👌 PINCH — FREEZE</div>
-    <div class="cmd-item">🤘 ROCK — CHAOS</div>
-  </div>
-</div>
-
-<video id="video-input" playsinline></video>
-
-<script type="module" src="do.js"></script>
+    <video id="video-input" playsinline></video>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
