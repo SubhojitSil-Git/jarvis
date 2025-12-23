@@ -2,51 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS MARK VIII: GESTURE ENGINE</title>
+    <title>JARVIS MK.VIII: SONIC GESTURE</title>
     <link rel="stylesheet" href="do.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } } </script>
 </head>
 <body>
-
     <div id="start-overlay">
-        <div class="scanner-line"></div>
-        <button id="start-btn">INITIALIZE GESTURE LINK</button>
-        <div class="sys-msg">32-POINT NEURAL MATRIX STANDBY...</div>
+        <button id="start-btn">ENGAGE NEURAL & AUDIO LINK</button>
+        <p style="color:#0ff; margin-top:10px;">Music reaction requires microphone access</p>
     </div>
-
     <div id="hud-layer">
-        <div id="reticle"><div id="reticle-inner"></div></div>
-        
+        <div id="reticle"></div>
         <div class="hud-panel top-left">
-            <h1>JARVIS <span class="version">MK.VIII</span></h1>
-            <div class="row">LINK: <span id="link-status" style="color:#00ff00">ACTIVE</span></div>
-            <div class="row">MATRIX: <span id="matrix-status">32-BIT GESTURE</span></div>
-            <div class="row">ACTIVE: <span id="gesture-status" style="color:#fff; font-weight:bold;">IDLE</span></div>
+            <h1>JARVIS MK.VIII</h1>
+            <div class="row">MATRIX: <span id="gesture-status">IDLE</span></div>
         </div>
-
-        <div class="hud-panel bottom-right">
-            <h1>TELEMETRY</h1>
-            <div class="row">ZOOM: <span id="val-zoom">1.0x</span></div>
-            <div class="row">ROTATION: <span id="val-rot">0°</span></div>
-            <div class="row">HAPTICS: <span id="val-haptics">SYNCED</span></div>
-        </div>
-
-        <div id="subtitle-box">AWAITING BIOMETRIC INPUT</div>
+        <div id="subtitle-box">AWAITING BIOMETRIC FEED</div>
     </div>
-
-    <video id="video-input" playsinline style="display:none"></video>
+    <video id="video-input" style="display:none"></video>
     <script type="module" src="do.js"></script>
 </body>
 </html>
