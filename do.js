@@ -10,7 +10,6 @@ const State = {
     audio: { analyser: null, dataArray: null, active: false }
 };
 
-// --- AUDIO ANALYSER ---
 const AudioEngine = {
     async init() {
         try {
@@ -50,7 +49,6 @@ const Engine3D = {
         this.originData = new Float32Array(State.particles.count * 3);
 
         for (let i = 0; i < State.particles.count; i++) {
-            // Creating a "Shell" look
             const r = (i < 2000) ? Math.random() * 20 : 60 + Math.random() * 15;
             const t = Math.random() * Math.PI * 2;
             const p = Math.acos(2 * Math.random() - 1);
@@ -77,7 +75,6 @@ const Engine3D = {
     setupPostProcessing() {
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(new RenderPass(this.scene, this.camera));
-        // High bloom for the "Iron Man" energy look
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.4, 0.5, 0.8);
         this.composer.addPass(bloom);
     },
@@ -93,7 +90,9 @@ const Engine3D = {
             bass = State.audio.dataArray[0] / 255;
         }
 
+        // --- DYNAMIC COLOR LOGIC ---
         let targetCol = new THREE.Color(0x00ffff);
+        if (State.gesture === 'PALM_OPEN') targetCol.set(0xffffff); // Flash White on Scatter
         if (State.gesture === 'X_BLOCK' || State.gesture === 'ROCK_ON') targetCol.set(0xff2200);
         if (State.gesture === 'HEART_SYNC') targetCol.set(0xff00cc);
         if (State.gesture === 'FRAME_SCAN') targetCol.set(0x00ff88);
@@ -102,19 +101,25 @@ const Engine3D = {
             const idx = i * 3;
             let tx = this.originData[idx], ty = this.originData[idx+1], tz = this.originData[idx+2];
 
-            // --- GESTURE PHYSICS ---
-            if (State.gesture === 'FIST_CLOSED') { tx *= 0.15; ty *= 0.15; tz *= 0.15; }
-            if (State.gesture === 'STACK_VERT') { ty *= 3.5; tx *= 0.2; }
-            if (State.gesture === 'TENT_SHIELD') { tx *= 1.2; ty *= 1.2; tz *= 1.2; }
+            // --- UPDATED GESTURE PHYSICS ---
+            if (State.gesture === 'FIST_CLOSED') { 
+                tx *= 0.1; ty *= 0.1; tz *= 0.1; // Strong Implosion
+            } 
+            else if (State.gesture === 'PALM_OPEN') { 
+                tx *= 6.0; ty *= 6.0; tz *= 6.0; // MASSIVE SCATTER
+            }
+            else if (State.gesture === 'STACK_VERT') { ty *= 3.5; tx *= 0.2; }
+            else if (State.gesture === 'TENT_SHIELD') { tx *= 1.3; ty *= 1.3; tz *= 1.3; }
+            
             if (State.isExploded || State.gesture === 'EXPAND_VIEW') { tx *= 4; ty *= 4; tz *= 4; }
 
             // Apply Sonic Jitter
-            const pulse = 1.0 + (bass * 0.4);
-            pAttr[idx] += (tx * pulse - pAttr[idx]) * 0.1;
-            pAttr[idx+1] += (ty * pulse - pAttr[idx+1]) * 0.1;
-            pAttr[idx+2] += (tz * pulse - pAttr[idx+2]) * 0.1;
+            const pulse = 1.0 + (bass * 0.5);
+            pAttr[idx] += (tx * pulse - pAttr[idx]) * 0.07;
+            pAttr[idx+1] += (ty * pulse - pAttr[idx+1]) * 0.07;
+            pAttr[idx+2] += (tz * pulse - pAttr[idx+2]) * 0.07;
 
-            // Smooth Color Shift
+            // Smooth Color Transition
             cAttr[idx] += (targetCol.r - cAttr[idx]) * 0.1;
             cAttr[idx+1] += (targetCol.g - cAttr[idx+1]) * 0.1;
             cAttr[idx+2] += (targetCol.b - cAttr[idx+2]) * 0.1;
@@ -136,37 +141,24 @@ const NeuralEngine = {
     detectHand(lm) {
         const d = (i, j) => this.dist(lm[i], lm[j]);
         
-        // 1. IMPROVED FINGER DETECTION (Relative to Wrist [0] and Knuckle [5,9,13,17])
-        // We check if the tip is further from the wrist than the knuckle.
-        const iE = d(8, 0) > d(6, 0);  // Index
-        const mE = d(12, 0) > d(10, 0); // Middle
-        const rE = d(16, 0) > d(14, 0); // Ring
-        const pE = d(20, 0) > d(18, 0); // Pinky
-        
-        // Thumb needs a horizontal check relative to the palm side
+        // VECTOR DETECTION: Comparing tip distance to wrist vs knuckle distance to wrist
+        const iE = d(8, 0) > d(6, 0); 
+        const mE = d(12, 0) > d(10, 0);
+        const rE = d(16, 0) > d(14, 0);
+        const pE = d(20, 0) > d(18, 0);
         const tE = d(4, 17) > d(2, 17); 
 
-        // 2. GESTURE LOGIC RE-MAPPED
-        // Basic Navigation
-        if (iE && mE && rE && pE && tE) return "PALM_OPEN";
-        if (!iE && !mE && !rE && !pE)   return "FIST_CLOSED";
+        if (iE && mE && rE && pE && tE) return "PALM_OPEN"; // Now Triggers SCATTER
+        if (!iE && !mE && !rE && !pE)   return "FIST_CLOSED"; // Now Triggers IMPLOSION
         if (iE && !mE && !rE && !pE)    return "INDEX_POINT";
-        
-        // Command Gestures
         if (iE && mE && !rE && !pE)     return "PEACE_SIGN";
         if (iE && pE && !mE && !rE)     return "ROCK_ON";
         if (tE && iE && pE && !mE && !rE) return "SPIDERMAN";
-        if (pE && !iE && !mE && !rE)    return "PINKY_POINT";
+        if (d(4, 8) < 0.05)             return "OK_SIGN";
         
-        // Precision States
-        if (d(4, 8) < 0.05)             return "OK_SIGN"; // Index-Thumb Pinch
         if (tE && !iE && !mE && !rE && !pE) {
             return (lm[4].y < lm[3].y) ? "THUMB_UP" : "THUMB_DOWN";
         }
-        
-        // Cultural/Special (The Vulcan & Call Me)
-        if (iE && mE && rE && pE && d(12, 16) > 0.1) return "VULCAN_SALUTE";
-        if (tE && pE && !iE && !mE && !rE) return "CALL_ME";
 
         return "TRACKING";
     },
@@ -175,28 +167,18 @@ const NeuralEngine = {
         const d = (a, b) => this.dist(a, b);
         const centerDist = d(h1[9], h2[9]);
         
-        // Dynamic Zoom (Iron Man style mapping)
         State.zoom = THREE.MathUtils.clamp(centerDist * 4, 0.5, 4.0);
         State.rotZ = Math.atan2(h2[9].y - h1[9].y, h2[9].x - h1[9].x);
 
-        // High-End Interaction Detection
-        // Heart Sync (Fingertips touching)
-        if (d(h1[8], h2[8]) < 0.06 && d(h1[4], h2[4]) < 0.06) return "HEART_SYNC";
-        
-        // Frame Scan (Index and Thumbs form a rectangle)
+        if (d(h1[8], h2[8]) < 0.07 && d(h1[4], h2[4]) < 0.07) return "HEART_SYNC";
         if (d(h1[8], h2[4]) < 0.1 && d(h2[8], h1[4]) < 0.1) return "FRAME_SCAN";
         
-        // X-BLOCK (Crossing wrists - check if wrist 0 is close to other wrist 0)
         if (d(h1[0], h2[0]) < 0.15) {
             document.body.classList.add('shake');
             setTimeout(() => document.body.classList.remove('shake'), 400);
             return "X_BLOCK";
         }
 
-        // TENT_SHIELD (All fingertips touching)
-        if (d(h1[8], h2[8]) < 0.05 && d(h1[12], h2[12]) < 0.05) return "TENT_SHIELD";
-
-        // Global Actions
         if (centerDist < 0.1) return "CLAP_RESET";
         if (centerDist > 0.8) { State.isExploded = true; return "EXPAND_VIEW"; }
         else { State.isExploded = false; }
@@ -205,6 +187,7 @@ const NeuralEngine = {
     }
 };
 
+// ... (Rest of the event listener and camera start code)
 document.getElementById('start-btn').addEventListener('click', () => {
     document.getElementById('start-overlay').style.display = 'none';
     AudioEngine.init();
@@ -219,7 +202,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
         if (h.length > 0) {
             State.gesture = h.length > 1 ? NeuralEngine.processTwoHands(h[0], h[1]) : NeuralEngine.detectHand(h[0]);
             document.getElementById('gesture-status').innerText = State.gesture;
-            document.getElementById('subtitle-box').innerText = "GESTURE: " + State.gesture;
+            document.getElementById('subtitle-box').innerText = "SYSTEM: " + State.gesture;
             const ret = document.getElementById('reticle');
             ret.style.display = 'block';
             ret.style.left = ((1 - h[0][9].x) * window.innerWidth) + 'px';
@@ -235,4 +218,3 @@ document.getElementById('start-btn').addEventListener('click', () => {
     });
     camera.start();
 });
-
