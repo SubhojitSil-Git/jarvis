@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JARVIS: HOLOGRAPHIC INTERFACE</title>
+    <title>JARVIS MARK VII</title>
     <link rel="stylesheet" href="do.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -21,30 +21,30 @@
 <body>
     <div id="start-overlay">
         <div class="glitch-wrapper"><div class="glitch" data-text="JARVIS">JARVIS</div></div>
-        <button id="start-btn">ENGAGE SYSTEMS</button>
-        <div class="sys-msg">CALIBRATING NEURAL SENSORS...</div>
+        <button id="start-btn">ENGAGE MARK VII</button>
+        <div class="sys-msg">BIOMETRIC HAND-SHAKE PENDING...</div>
     </div>
 
     <div id="hud-layer">
-        <div id="subtitle-box">AWAITING BIOMETRIC LINK</div>
-        
         <div class="hud-panel top-left">
-            <h1>MARK VI <span class="version">INTERFACE</span></h1>
-            <div class="row">PRIMARY: <span id="hand1-status">OFFLINE</span></div>
-            <div class="row">SECONDARY: <span id="hand2-status">OFFLINE</span></div>
-            <div class="row">ZOOM: <span id="zoom-level">1.0x</span></div>
+            <h1>SYSTEM: <span class="version">ACTIVE</span></h1>
+            <div class="row">PRIMARY: <span id="h1-gesture">NONE</span></div>
+            <div class="row">SECONDARY: <span id="h2-gesture">NONE</span></div>
+            <div class="row">ZOOM: <span id="zoom-val">1.0x</span></div>
         </div>
 
         <div class="hud-panel bottom-right">
-            <h1>GESTURE MATRIX</h1>
-            <div class="cmd-item" id="hint-pinch">PINCH: MANIPULATE (COLOR SHIFT)</div>
-            <div class="cmd-item" id="hint-zoom">2 HANDS: OPTICAL ZOOM</div>
-            <div class="cmd-item" id="hint-palm">PALM: REPULSOR FIELD</div>
+            <h1>GESTURE COMMANDS</h1>
+            <div class="cmd-item">POINT: ROTATE</div>
+            <div class="cmd-item">PINCH: COLOR SHIFT</div>
+            <div class="cmd-item">2H-SPREAD: ZOOM</div>
+            <div class="cmd-item">PEACE: FREEZE</div>
+            <div class="cmd-item">FIST: GRAVITY</div>
         </div>
+        <div id="subtitle-box">AWAITING INPUT...</div>
     </div>
 
     <video id="video-input" playsinline></video>
     <script type="module" src="do.js"></script>
 </body>
 </html>
-
