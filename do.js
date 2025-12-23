@@ -1,48 +1,45 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-// --- STARK AUDIO ENGINE ---
-const SFX = {
+// --- NEW CYBER-SYNTH AUDIO ---
+const AudioEngine = {
     ctx: null,
-    osc: null,
-    gain: null,
-    init() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    },
-    // High-pitched data beep
-    ping() {
+    init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    
+    // High-end mechanical click
+    click() {
         if(!this.ctx) return;
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = 'sine'; o.frequency.setValueAtTime(880, this.ctx.currentTime);
-        g.gain.setValueAtTime(0.1, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
-        o.connect(g); g.connect(this.ctx.destination);
-        o.start(); o.stop(this.ctx.currentTime + 0.1);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.05);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.05);
     },
-    // Deep humming sound for zoom
-    zoomVrm(factor) {
+
+    // Futuristic hum for zoom/rotation
+    hum(freq = 200) {
         if(!this.ctx) return;
-        const freq = 100 + (factor * 200);
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        g.gain.setValueAtTime(0.05, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
-        o.connect(g); g.connect(this.ctx.destination);
-        o.start(); o.stop(this.ctx.currentTime + 0.2);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.1);
     }
 };
 
 const State = {
-    hands: [],
     zoom: 1.0,
-    baseDist: null,
     isPinching: false,
-    colorTarget: new THREE.Color(0x00ffff), // Idle Blue
-    activeColor: new THREE.Color(0xffaa00)  // Active Gold
+    isPointing: false,
+    isFreezed: false,
+    rotationSpeed: { x: 0, y: 0.005 },
+    activeColor: new THREE.Color(0x00ffff),
+    targetColor: new THREE.Color(0xff8800)
 };
 
 const Visuals = {
@@ -50,7 +47,8 @@ const Visuals = {
     
     init() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+        const aspect = window.innerWidth / window.innerHeight;
+        this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
         this.camera.position.z = 150;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -61,32 +59,29 @@ const Visuals = {
     },
 
     createHologram() {
-        // --- ADAPTIVE SCALING ---
-        const isMobile = window.innerWidth < 768;
-        const sphereRadius = isMobile ? 40 : 75; // Bigger for PC/Tablet
+        // PC vs Mobile Adaptive Size
+        const isSmallScreen = window.innerWidth < 768;
+        const radius = isSmallScreen ? 45 : 85; 
+        const count = isSmallScreen ? 4000 : 10000;
 
-        const count = isMobile ? 3000 : 8000;
         const geo = new THREE.BufferGeometry();
         const pos = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
-        
+        const cols = new Float32Array(count * 3);
+
         for(let i=0; i<count; i++) {
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            pos[i*3] = sphereRadius * Math.sin(phi) * Math.cos(theta);
-            pos[i*3+1] = sphereRadius * Math.sin(phi) * Math.sin(theta);
-            pos[i*3+2] = sphereRadius * Math.cos(phi);
-            colors[i*3] = 0; colors[i*3+1] = 1; colors[i*3+2] = 1;
+            pos[i*3] = radius * Math.sin(phi) * Math.cos(theta);
+            pos[i*3+1] = radius * Math.sin(phi) * Math.sin(theta);
+            pos[i*3+2] = radius * Math.cos(phi);
+            cols[i*3] = 0; cols[i*3+1] = 1; cols[i*3+2] = 1;
         }
-        
+
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        
-        const mat = new THREE.PointsMaterial({
-            size: 0.8, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
-        });
-        
-        this.points = new THREE.Points(geo, mat);
+        geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+        this.points = new THREE.Points(geo, new THREE.PointsMaterial({
+            size: 0.7, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+        }));
         this.scene.add(this.points);
         this.origPos = new Float32Array(pos);
     },
@@ -94,96 +89,104 @@ const Visuals = {
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        const posAttr = this.points.geometry.attributes.position;
-        const colAttr = this.points.geometry.attributes.color;
-
-        // Apply Zoom to Camera
-        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 150 / State.zoom, 0.1);
-        document.getElementById('zoom-level').innerText = State.zoom.toFixed(1) + "x";
-
-        // Global Color Shift
-        const target = State.isPinching ? State.activeColor : State.colorTarget;
+        // Handle Zoom
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 150/State.zoom, 0.1);
         
-        for (let i = 0; i < colAttr.count; i++) {
-            colAttr.array[i*3] += (target.r - colAttr.array[i*3]) * 0.1;
-            colAttr.array[i*3+1] += (target.g - colAttr.array[i*3+1]) * 0.1;
-            colAttr.array[i*3+2] += (target.b - colAttr.array[i*3+2]) * 0.1;
-            
-            // Subtle pulse
-            const x = this.origPos[i*3];
-            const y = this.origPos[i*3+1];
-            const z = this.origPos[i*3+2];
-            posAttr.array[i*3] = x + Math.sin(Date.now()*0.002 + i)*0.5;
+        // Handle Rotation
+        if (!State.isFreezed) {
+            this.points.rotation.y += State.rotationSpeed.y;
+            this.points.rotation.x += State.rotationSpeed.x;
         }
 
-        this.points.rotation.y += 0.003;
-        posAttr.needsUpdate = true;
+        // Handle Color Smoothing
+        const colAttr = this.points.geometry.attributes.color;
+        const currentTarget = State.isPinching ? State.targetColor : State.activeColor;
+        
+        for (let i = 0; i < colAttr.count; i++) {
+            colAttr.array[i*3] += (currentTarget.r - colAttr.array[i*3]) * 0.1;
+            colAttr.array[i*3+1] += (currentTarget.g - colAttr.array[i*3+1]) * 0.1;
+            colAttr.array[i*3+2] += (currentTarget.b - colAttr.array[i*3+2]) * 0.1;
+        }
         colAttr.needsUpdate = true;
+        
         this.renderer.render(this.scene, this.camera);
     }
 };
 
-// --- START APP ---
+// --- GESTURE RECOGNITION (12+ States) ---
+function processGestures(landmarks, handIndex) {
+    const lm = landmarks;
+    const dist = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y);
+
+    // 1. Pinch (Thumb + Index)
+    if (dist(4, 8) < 0.04) return 'PINCH';
+    // 2. Pointing (Index up)
+    if (lm[8].y < lm[6].y && lm[12].y > lm[10].y) return 'POINT';
+    // 3. Peace (Index + Middle)
+    if (lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y) return 'PEACE';
+    // 4. Fist
+    if (dist(8, 0) < 0.15 && dist(12, 0) < 0.15) return 'FIST';
+    // 5. Rock (Pinky + Index)
+    if (lm[8].y < lm[6].y && lm[20].y < lm[18].y && lm[12].y > lm[10].y) return 'ROCK';
+    // 6. Thumb Up
+    if (lm[4].y < lm[3].y && lm[8].x > lm[6].x) return 'THUMB';
+    // 7. Open Palm
+    if (lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y < lm[14].y && lm[20].y < lm[18].y) return 'PALM';
+    
+    return 'IDLE';
+}
+
+// --- INITIALIZE ---
 document.getElementById('start-btn').addEventListener('click', async () => {
-    SFX.init();
+    AudioEngine.init();
     document.getElementById('start-overlay').style.display = 'none';
     Visuals.init();
     Visuals.animate();
 
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6 });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7 });
 
     hands.onResults(res => {
-        State.hands = res.multiHandLandmarks || [];
+        const handData = res.multiHandLandmarks || [];
         
-        // --- TWO HAND ZOOM LOGIC ---
-        if (State.hands.length === 2) {
-            const h1 = State.hands[0][9];
-            const h2 = State.hands[1][9];
-            const currentDist = Math.hypot(h1.x - h2.x, h1.y - h2.y);
+        // Reset per-frame states
+        State.isPinching = false;
+        State.isPointing = false;
 
-            if (!State.baseDist) {
-                State.baseDist = currentDist;
-            } else {
-                const diff = (currentDist / State.baseDist);
-                const oldZoom = State.zoom;
-                State.zoom = THREE.MathUtils.clamp(diff, 0.5, 3.0);
-                
-                // Play zoom sound if significant change
-                if (Math.abs(oldZoom - State.zoom) > 0.05) SFX.zoomVrm(State.zoom);
-            }
-            document.getElementById('hand1-status').innerText = "TRACKING";
-            document.getElementById('hand2-status').innerText = "TRACKING";
-        } else {
-            State.baseDist = null;
-            document.getElementById('hand2-status').innerText = "OFFLINE";
-        }
+        handData.forEach((lm, i) => {
+            const gesture = processGestures(lm, i);
+            document.getElementById(`h${i+1}-gesture`).innerText = gesture;
 
-        // --- SINGLE HAND PINCH COLOR LOGIC ---
-        if (State.hands.length > 0) {
-            const h = State.hands[0];
-            const pinchDist = Math.hypot(h[4].x - h[8].x, h[4].y - h[8].y);
-            
-            if (pinchDist < 0.04) {
-                if (!State.isPinching) SFX.ping();
+            if (gesture === 'PINCH') {
                 State.isPinching = true;
-            } else {
-                State.isPinching = false;
+                AudioEngine.hum(400); 
             }
-            document.getElementById('hand1-status').innerText = "TRACKING";
+            if (gesture === 'POINT') {
+                State.isPointing = true;
+                State.rotationSpeed.y = (lm[8].x - 0.5) * 0.1;
+                State.rotationSpeed.x = (lm[8].y - 0.5) * 0.1;
+                AudioEngine.hum(100);
+            }
+            if (gesture === 'PEACE') State.isFreezed = true;
+            else State.isFreezed = false;
+        });
+
+        // 2-Hand Zoom Logic
+        if (handData.length === 2) {
+            const d = Math.hypot(handData[0][9].x - handData[1][9].x, handData[0][9].y - handData[1][9].y);
+            State.zoom = THREE.MathUtils.clamp(d * 3, 0.5, 4.0);
+            document.getElementById('zoom-val').innerText = State.zoom.toFixed(1) + "x";
         }
     });
 
     const video = document.getElementById('video-input');
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: 640, height: 480 } 
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
     video.srcObject = stream;
     video.play();
 
-    const cameraControl = async () => {
+    const loop = async () => {
         await hands.send({image: video});
-        requestAnimationFrame(cameraControl);
+        requestAnimationFrame(loop);
     };
-    cameraControl();
+    loop();
 });
