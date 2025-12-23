@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JARVIS MARK VII</title>
+    <title>JARVIS MARK VIII: HOLOGRAPHIC SUITE</title>
     <link rel="stylesheet" href="do.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -19,29 +19,34 @@
     </script>
 </head>
 <body>
+
     <div id="start-overlay">
-        <div class="glitch-wrapper"><div class="glitch" data-text="JARVIS">JARVIS</div></div>
-        <button id="start-btn">ENGAGE MARK VII</button>
+        <div class="glitch-wrapper">
+            <div class="glitch" data-text="JARVIS">JARVIS</div>
+        </div>
+        <button id="start-btn">ENGAGE MARK VIII INTERFACE</button>
         <div class="sys-msg">BIOMETRIC HAND-SHAKE PENDING...</div>
     </div>
 
     <div id="hud-layer">
+        <div class="scanner-line"></div>
+        
         <div class="hud-panel top-left">
-            <h1>SYSTEM: <span class="version">ACTIVE</span></h1>
-            <div class="row">PRIMARY: <span id="h1-gesture">NONE</span></div>
-            <div class="row">SECONDARY: <span id="h2-gesture">NONE</span></div>
-            <div class="row">ZOOM: <span id="zoom-val">1.0x</span></div>
+            <div class="corner-acc"></div>
+            <h1>CORE <span class="version">SENTIENT</span></h1>
+            <div class="row">H1 GESTURE: <span id="h1-label" class="val">---</span></div>
+            <div class="row">H2 GESTURE: <span id="h2-label" class="val">---</span></div>
+            <div class="row">SYNC: <span id="sync-val" class="val">0%</span></div>
         </div>
 
         <div class="hud-panel bottom-right">
-            <h1>GESTURE COMMANDS</h1>
-            <div class="cmd-item">POINT: ROTATE</div>
-            <div class="cmd-item">PINCH: COLOR SHIFT</div>
-            <div class="cmd-item">2H-SPREAD: ZOOM</div>
-            <div class="cmd-item">PEACE: FREEZE</div>
-            <div class="cmd-item">FIST: GRAVITY</div>
+            <h1>SPATIAL TELEMETRY</h1>
+            <div class="stat-row">ZOOM: <span id="zoom-ui">1.0x</span></div>
+            <div class="stat-row">ROTATION-Z: <span id="rot-ui">0°</span></div>
+            <div class="stat-row">SYSTEM: <span id="sys-status">STABLE</span></div>
         </div>
-        <div id="subtitle-box">AWAITING INPUT...</div>
+
+        <div id="subtitle-box">AWAITING NEURAL INPUT</div>
     </div>
 
     <video id="video-input" playsinline></video>
