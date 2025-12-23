@@ -9,7 +9,7 @@ const State = {
     handPos: { x: 0.5, y: 0.5 },
     particles: { count: 15000 }, 
     audio: { analyser: null, dataArray: null, active: false },
-    manualZoom: 180,
+    manualZoom: 220, // Slightly further start to appreciate the scale
     activeHue: 0.55,
     rainbowMode: false
 };
@@ -19,7 +19,7 @@ const SoundEngine = {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
         audio.volume = 0.4;
         audio.play().catch(e => console.log("Audio play blocked."));
-        const msg = new SpeechSynthesisUtterance("Neural Link Established. System Online.");
+        const msg = new SpeechSynthesisUtterance("Neural Core Hollowed. Link Established.");
         msg.rate = 1.0; msg.pitch = 0.8;
         window.speechSynthesis.speak(msg);
     }
@@ -46,7 +46,6 @@ const Engine3D = {
     
     init() {
         this.scene = new THREE.Scene();
-        // UPDATED: Near plane set to 0.01 to allow deep zooming without clipping
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 2000);
         this.camera.position.z = State.manualZoom;
 
@@ -65,8 +64,16 @@ const Engine3D = {
         const col = new Float32Array(State.particles.count * 3);
         this.originData = new Float32Array(State.particles.count * 3);
 
+        const minRadius = 18; // The "Hollow" space size
+
         for (let i = 0; i < State.particles.count; i++) {
-            const r = (i < 6000) ? Math.random() * 25 : 55 + Math.random() * 20;
+            // Logic: Force particles to stay outside the minRadius
+            // Inner Shell (High density wall) vs Outer Shell (Wispy)
+            const isInner = i < 8000;
+            const r = isInner ? 
+                      minRadius + Math.random() * 15 : // Dense inner wall
+                      60 + Math.random() * 25;        // Far outer shell
+            
             const t = Math.random() * Math.PI * 2;
             const p = Math.acos(2 * Math.random() - 1);
             
@@ -74,7 +81,12 @@ const Engine3D = {
             pos[i*3+1] = this.originData[i*3+1] = r * Math.sin(p) * Math.sin(t);
             pos[i*3+2] = this.originData[i*3+2] = r * Math.cos(p);
             
-            col[i*3] = 0.5; col[i*3+1] = 0.8; col[i*3+2] = 1.0;
+            // Core particles are brighter (White-ish), Outer are Cyan
+            if (isInner) {
+                col[i*3] = 0.8; col[i*3+1] = 0.95; col[i*3+2] = 1.0;
+            } else {
+                col[i*3] = 0.2; col[i*3+1] = 0.6; col[i*3+2] = 0.8;
+            }
         }
 
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -83,11 +95,11 @@ const Engine3D = {
         const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
 
         const mat = new THREE.PointsMaterial({
-            size: 1.5,
+            size: 1.6,
             map: sprite,
             vertexColors: true, 
             transparent: true, 
-            opacity: 0.45,
+            opacity: 0.5,
             blending: THREE.AdditiveBlending,
             depthWrite: false
         });
@@ -102,9 +114,9 @@ const Engine3D = {
         
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight), 
+            0.7, // Slightly higher bloom for the "hollow" glow
             0.5, 
-            0.4, 
-            0.85 
+            0.8
         );
         this.composer.addPass(this.bloomPass);
     },
@@ -120,7 +132,7 @@ const Engine3D = {
             bass = State.audio.dataArray[0] / 255;
         }
 
-        const targetGlow = 0.4 + (bass * 0.7);
+        const targetGlow = 0.5 + (bass * 0.8);
         this.bloomPass.strength = THREE.MathUtils.lerp(this.bloomPass.strength, targetGlow, 0.1);
 
         let targetCol = new THREE.Color().setHSL(State.activeHue, 0.8, 0.6);
@@ -129,7 +141,8 @@ const Engine3D = {
             const idx = i * 3;
             let tx = this.originData[idx], ty = this.originData[idx+1], tz = this.originData[idx+2];
 
-            const jitter = Math.sin(Date.now() * 0.002 + i) * 0.3;
+            // Harmonic vibration
+            const jitter = Math.sin(Date.now() * 0.002 + i) * 0.4;
             tx += jitter; ty += jitter;
 
             if (State.gesture === 'HEART_SYNC') {
@@ -139,7 +152,7 @@ const Engine3D = {
                 const heartBeat = 1.0 + Math.pow(Math.sin(Date.now() * 0.006), 12) * 0.2;
                 tx *= heartBeat; ty *= heartBeat;
             }
-            else if (State.gesture === 'FIST_CLOSED') { tx *= 0.1; ty *= 0.1; tz *= 0.1; }
+            else if (State.gesture === 'FIST_CLOSED') { tx *= 0.15; ty *= 0.15; tz *= 0.15; }
             else if (State.gesture === 'PALM_OPEN') {
                 this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -(State.handPos.x - 0.5) * 4, 0.1);
                 this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, (State.handPos.y - 0.5) * 4, 0.1);
@@ -194,8 +207,7 @@ const NeuralEngine = {
         const centerDist = d(h1[9], h2[9]);
         if (centerDist > 0.55) State.manualZoom -= (centerDist * 20);
         if (centerDist < 0.35) State.manualZoom += ((0.5 - centerDist) * 20);
-        // UPDATED: Clamp min zoom to 1 to allow going inside the core
-        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 1, 600);
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 0.5, 700);
         if (d(h1[8], h2[8]) < 0.08 && d(h1[4], h2[4]) < 0.08) return "HEART_SYNC";
         return "DUAL_NAV";
     }
