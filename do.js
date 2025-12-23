@@ -132,52 +132,76 @@ const Engine3D = {
 
 const NeuralEngine = {
     dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); },
+
     detectHand(lm) {
         const d = (i, j) => this.dist(lm[i], lm[j]);
-        const iE = lm[8].y < lm[6].y; const mE = lm[12].y < lm[10].y;
-        const rE = lm[16].y < lm[14].y; const pE = lm[20].y < lm[18].y;
-        const tE = d(4, 9) > 0.15;
+        
+        // 1. IMPROVED FINGER DETECTION (Relative to Wrist [0] and Knuckle [5,9,13,17])
+        // We check if the tip is further from the wrist than the knuckle.
+        const iE = d(8, 0) > d(6, 0);  // Index
+        const mE = d(12, 0) > d(10, 0); // Middle
+        const rE = d(16, 0) > d(14, 0); // Ring
+        const pE = d(20, 0) > d(18, 0); // Pinky
+        
+        // Thumb needs a horizontal check relative to the palm side
+        const tE = d(4, 17) > d(2, 17); 
 
+        // 2. GESTURE LOGIC RE-MAPPED
+        // Basic Navigation
         if (iE && mE && rE && pE && tE) return "PALM_OPEN";
-        if (!iE && !mE && !rE && !pE) return "FIST_CLOSED";
-        if (iE && !mE && !rE && !pE) return "INDEX_POINT";
-        if (iE && mE && !rE && !pE) return "PEACE_SIGN";
-        if (iE && pE && !mE && !rE) return "ROCK_ON";
-        if (tE && !iE && !mE && !rE && !pE) return (lm[4].y < lm[3].y) ? "THUMB_UP" : "THUMB_DOWN";
-        if (d(4, 8) < 0.05 && mE && rE && pE) return "OK_SIGN";
+        if (!iE && !mE && !rE && !pE)   return "FIST_CLOSED";
+        if (iE && !mE && !rE && !pE)    return "INDEX_POINT";
+        
+        // Command Gestures
+        if (iE && mE && !rE && !pE)     return "PEACE_SIGN";
+        if (iE && pE && !mE && !rE)     return "ROCK_ON";
         if (tE && iE && pE && !mE && !rE) return "SPIDERMAN";
-        if (pE && !iE && !mE && !rE) return "PINKY_POINT";
+        if (pE && !iE && !mE && !rE)    return "PINKY_POINT";
+        
+        // Precision States
+        if (d(4, 8) < 0.05)             return "OK_SIGN"; // Index-Thumb Pinch
+        if (tE && !iE && !mE && !rE && !pE) {
+            return (lm[4].y < lm[3].y) ? "THUMB_UP" : "THUMB_DOWN";
+        }
+        
+        // Cultural/Special (The Vulcan & Call Me)
+        if (iE && mE && rE && pE && d(12, 16) > 0.1) return "VULCAN_SALUTE";
         if (tE && pE && !iE && !mE && !rE) return "CALL_ME";
-        if (iE && mE && rE && pE && !tE) return "FOUR_FINGERS";
-        if (iE && mE && rE && !pE && !tE) return "THREE_FINGERS";
-        if (iE && mE && d(8, 12) < 0.05 && !rE) return "VULCAN_SALUTE";
-        if (d(4, 8) < 0.04) return "PINCH_INDEX";
-        if (d(4, 12) < 0.04) return "PINCH_MIDDLE";
-        if (d(4, 16) < 0.04) return "PINCH_RING";
-        if (d(4, 20) < 0.04) return "PINCH_PINKY";
-        if (d(4, 8) > 0.1 && d(4, 8) < 0.2) return "C_SHAPE";
-        if (tE && iE && !mE && !rE) return "L_SHAPE";
-        if (!iE && mE && rE && pE) return "FOLDED_INDEX";
-        if (lm[0].y < lm[9].y) return "PALM_SLEEP";
+
         return "TRACKING";
     },
+
     processTwoHands(h1, h2) {
         const d = (a, b) => this.dist(a, b);
-        const cD = d(h1[9], h2[9]);
-        State.zoom = THREE.MathUtils.clamp(cD * 3, 0.5, 4.0);
+        const centerDist = d(h1[9], h2[9]);
+        
+        // Dynamic Zoom (Iron Man style mapping)
+        State.zoom = THREE.MathUtils.clamp(centerDist * 4, 0.5, 4.0);
         State.rotZ = Math.atan2(h2[9].y - h1[9].y, h2[9].x - h1[9].x);
-        if (d(h1[4], h2[4]) < 0.07 && d(h1[8], h2[8]) < 0.07) return "HEART_SYNC";
-        if (d(h1[4], h2[8]) < 0.1 && d(h2[4], h1[8]) < 0.1) return "FRAME_SCAN";
-        if (cD < 0.1) return "CLAP_RESET";
-        if (cD < 0.25 && Math.abs(h1[9].x - h2[9].x) < 0.05) {
-            document.body.classList.add('shake'); // Shake the HUD
-            setTimeout(() => document.body.classList.remove('shake'), 500);
+
+        // High-End Interaction Detection
+        // Heart Sync (Fingertips touching)
+        if (d(h1[8], h2[8]) < 0.06 && d(h1[4], h2[4]) < 0.06) return "HEART_SYNC";
+        
+        // Frame Scan (Index and Thumbs form a rectangle)
+        if (d(h1[8], h2[4]) < 0.1 && d(h2[8], h1[4]) < 0.1) return "FRAME_SCAN";
+        
+        // X-BLOCK (Crossing wrists - check if wrist 0 is close to other wrist 0)
+        if (d(h1[0], h2[0]) < 0.15) {
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 400);
             return "X_BLOCK";
         }
-        if (Math.abs(h1[9].y - h2[9].y) > 0.3) return "STACK_VERT";
-        if (d(h1[8], h2[8]) < 0.05) return "TENT_SHIELD";
-        if (cD > 0.75) { State.isExploded = true; return "EXPAND_VIEW"; } else State.isExploded = false;
-        return (cD > 0.5) ? "ZOOM_EXPAND" : "ZOOM_SHRINK";
+
+        // TENT_SHIELD (All fingertips touching)
+        if (d(h1[8], h2[8]) < 0.05 && d(h1[12], h2[12]) < 0.05) return "TENT_SHIELD";
+
+        // Global Actions
+        if (centerDist < 0.1) return "CLAP_RESET";
+        if (centerDist > 0.8) { State.isExploded = true; return "EXPAND_VIEW"; }
+        else { State.isExploded = false; }
+
+        return centerDist > 0.5 ? "ZOOM_EXPAND" : "ZOOM_SHRINK";
     }
 };
 
@@ -211,3 +235,4 @@ document.getElementById('start-btn').addEventListener('click', () => {
     });
     camera.start();
 });
+
