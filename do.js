@@ -118,28 +118,6 @@ const LOCAL_DB = {
     "food": ["I cannot eat, but I hear pizza is good.", "I run on electricity.", "Do you need a recipe?"],
     "beer": ["I will alert the fabrication unit.", "Cheers.", "Drink responsibly."],
 
-    // --- SHUTDOWN PROTOCOL ---
-    "sleep": [
-        function() {
-            setTimeout(() => {
-                document.body.style.transition = "opacity 3s";
-                document.body.style.opacity = "0";
-                document.body.style.pointerEvents = "none";
-                if(Brain.recognition) Brain.recognition.abort();
-                setTimeout(() => location.reload(), 5000);
-            }, 1500);
-            return "Goodnight, sir. Powering down main systems.";
-        },
-        "Initiating sleep mode. Goodbye.",
-        "System shutdown sequence engaged."
-    ],
-    
-    "off": ["Turning off visual interface.", function(){ 
-        setTimeout(() => document.body.style.opacity = "0", 1000);
-        return "Going dark."; 
-    }]
-};
-
 // --- GLOBAL STATE ---
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const State = {
@@ -597,3 +575,4 @@ window.addEventListener('resize', () => {
         Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 });
+
