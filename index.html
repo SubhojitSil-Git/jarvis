@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JARVIS MARK VIII: HOLOGRAPHIC SUITE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS MARK VIII: GESTURE ENGINE</title>
     <link rel="stylesheet" href="do.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -21,35 +21,32 @@
 <body>
 
     <div id="start-overlay">
-        <div class="glitch-wrapper">
-            <div class="glitch" data-text="JARVIS">JARVIS</div>
-        </div>
-        <button id="start-btn">ENGAGE MARK VIII INTERFACE</button>
-        <div class="sys-msg">BIOMETRIC HAND-SHAKE PENDING...</div>
+        <div class="scanner-line"></div>
+        <button id="start-btn">INITIALIZE GESTURE LINK</button>
+        <div class="sys-msg">32-POINT NEURAL MATRIX STANDBY...</div>
     </div>
 
     <div id="hud-layer">
-        <div class="scanner-line"></div>
+        <div id="reticle"><div id="reticle-inner"></div></div>
         
         <div class="hud-panel top-left">
-            <div class="corner-acc"></div>
-            <h1>CORE <span class="version">SENTIENT</span></h1>
-            <div class="row">H1 GESTURE: <span id="h1-label" class="val">---</span></div>
-            <div class="row">H2 GESTURE: <span id="h2-label" class="val">---</span></div>
-            <div class="row">SYNC: <span id="sync-val" class="val">0%</span></div>
+            <h1>JARVIS <span class="version">MK.VIII</span></h1>
+            <div class="row">LINK: <span id="link-status" style="color:#00ff00">ACTIVE</span></div>
+            <div class="row">MATRIX: <span id="matrix-status">32-BIT GESTURE</span></div>
+            <div class="row">ACTIVE: <span id="gesture-status" style="color:#fff; font-weight:bold;">IDLE</span></div>
         </div>
 
         <div class="hud-panel bottom-right">
-            <h1>SPATIAL TELEMETRY</h1>
-            <div class="stat-row">ZOOM: <span id="zoom-ui">1.0x</span></div>
-            <div class="stat-row">ROTATION-Z: <span id="rot-ui">0°</span></div>
-            <div class="stat-row">SYSTEM: <span id="sys-status">STABLE</span></div>
+            <h1>TELEMETRY</h1>
+            <div class="row">ZOOM: <span id="val-zoom">1.0x</span></div>
+            <div class="row">ROTATION: <span id="val-rot">0°</span></div>
+            <div class="row">HAPTICS: <span id="val-haptics">SYNCED</span></div>
         </div>
 
-        <div id="subtitle-box">AWAITING NEURAL INPUT</div>
+        <div id="subtitle-box">AWAITING BIOMETRIC INPUT</div>
     </div>
 
-    <video id="video-input" playsinline></video>
+    <video id="video-input" playsinline style="display:none"></video>
     <script type="module" src="do.js"></script>
 </body>
 </html>
