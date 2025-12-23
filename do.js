@@ -5,10 +5,14 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 const State = {
     gesture: 'IDLE', lastGesture: 'IDLE',
-    zoom: 1.0, rotZ: 0, isExploded: false,
-    handPos: { x: 0.5, y: 0.5 }, // Tracks palm center for rotation
+    rotZ: 0, isExploded: false,
+    handPos: { x: 0.5, y: 0.5 },
     particles: { count: 12000 },
-    audio: { analyser: null, dataArray: null, active: false }
+    audio: { analyser: null, dataArray: null, active: false },
+    // NEW: Persistent Controls
+    manualZoom: 180,
+    activeHue: 0.5,
+    rainbowMode: false
 };
 
 const SoundEngine = {
@@ -16,7 +20,6 @@ const SoundEngine = {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
         audio.volume = 0.4;
         audio.play().catch(e => console.log("Audio play blocked."));
-        
         const msg = new SpeechSynthesisUtterance("Synapse Neural Link Established. Hand tracking system powering on.");
         msg.rate = 1.0; msg.pitch = 0.8;
         window.speechSynthesis.speak(msg);
@@ -45,7 +48,7 @@ const Engine3D = {
     init() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        this.camera.position.z = 180;
+        this.camera.position.z = State.manualZoom;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -99,64 +102,53 @@ const Engine3D = {
             bass = State.audio.dataArray[0] / 255;
         }
 
-        let targetCol = new THREE.Color(0x00ffff);
-        if (State.gesture === 'PALM_OPEN') targetCol.set(0xffffff); 
-        if (State.gesture === 'X_BLOCK' || State.gesture === 'ROCK_ON') targetCol.set(0xff2200);
-        if (State.gesture === 'HEART_SYNC') targetCol.set(0xff00cc);
-        if (State.gesture === 'FRAME_SCAN') targetCol.set(0x00ff88);
+        // --- GLOBAL COLOR CALCULATION ---
+        let targetCol = new THREE.Color().setHSL(State.activeHue, 1.0, 0.5);
 
         for (let i = 0; i < State.particles.count; i++) {
             const idx = i * 3;
             let tx = this.originData[idx], ty = this.originData[idx+1], tz = this.originData[idx+2];
 
-            // --- GESTURE PHYSICS ---
             if (State.gesture === 'HEART_SYNC') {
                 const t = (i / State.particles.count) * Math.PI * 2;
                 tx = 16 * Math.pow(Math.sin(t), 3) * 4;
                 ty = (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) * 4;
-                tz = Math.sin(t * 10) * 5;
                 const heartBeat = 1.0 + Math.pow(Math.sin(Date.now() * 0.006), 12) * 0.25;
                 tx *= heartBeat; ty *= heartBeat;
             } 
             else if (State.gesture === 'FIST_CLOSED') { tx *= 0.1; ty *= 0.1; tz *= 0.1; } 
             else if (State.gesture === 'PALM_OPEN') {
-                // Return to original sphere positions (no scatter)
-                tx = this.originData[idx];
-                ty = this.originData[idx+1];
-                tz = this.originData[idx+2];
-                
-                // Rotate the entire Points object based on Palm Position
-                const targetRotY = (State.handPos.x - 0.5) * Math.PI * 2;
-                const targetRotX = (State.handPos.y - 0.5) * Math.PI;
-                this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -targetRotY, 0.05);
-                this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, targetRotX, 0.05);
+                tx = this.originData[idx]; ty = this.originData[idx+1]; tz = this.originData[idx+2];
+                this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -(State.handPos.x - 0.5) * 4, 0.05);
+                this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, (State.handPos.y - 0.5) * 4, 0.05);
             }
-            else if (State.gesture === 'STACK_VERT') { ty *= 3.5; tx *= 0.2; }
-            
-            if (State.isExploded || State.gesture === 'EXPAND_VIEW') { tx *= 4; ty *= 4; tz *= 4; }
 
-            const pulse = 1.0 + (bass * 0.5);
-            const lerpSpeed = (State.gesture === 'HEART_SYNC' || State.gesture === 'PALM_OPEN') ? 0.15 : 0.07;
-            
-            pAttr[idx] += (tx * pulse - pAttr[idx]) * lerpSpeed;
-            pAttr[idx+1] += (ty * pulse - pAttr[idx+1]) * lerpSpeed;
-            pAttr[idx+2] += (tz * pulse - pAttr[idx+2]) * 0.07;
+            const lerpSpeed = 0.07;
+            pAttr[idx] += (tx - pAttr[idx]) * lerpSpeed;
+            pAttr[idx+1] += (ty - pAttr[idx+1]) * lerpSpeed;
+            pAttr[idx+2] += (tz - pAttr[idx+2]) * lerpSpeed;
 
-            cAttr[idx] += (targetCol.r - cAttr[idx]) * 0.1;
-            cAttr[idx+1] += (targetCol.g - cAttr[idx+1]) * 0.1;
-            cAttr[idx+2] += (targetCol.b - cAttr[idx+2]) * 0.1;
+            // --- COLOR MODE LOGIC ---
+            if (State.rainbowMode) {
+                const pCol = new THREE.Color().setHSL((i / State.particles.count) + (Date.now() * 0.0002), 0.8, 0.5);
+                cAttr[idx] += (pCol.r - cAttr[idx]) * 0.1;
+                cAttr[idx+1] += (pCol.g - cAttr[idx+1]) * 0.1;
+                cAttr[idx+2] += (pCol.b - cAttr[idx+2]) * 0.1;
+            } else {
+                cAttr[idx] += (targetCol.r - cAttr[idx]) * 0.1;
+                cAttr[idx+1] += (targetCol.g - cAttr[idx+1]) * 0.1;
+                cAttr[idx+2] += (targetCol.b - cAttr[idx+2]) * 0.1;
+            }
         }
 
         this.points.geometry.attributes.position.needsUpdate = true;
         this.points.geometry.attributes.color.needsUpdate = true;
         
-        // Continuous rotation only if NOT tethered by PALM_OPEN
         if (State.gesture !== 'PALM_OPEN') {
             this.points.rotation.y += 0.005 + (bass * 0.05);
         }
         
-        this.points.rotation.z = THREE.MathUtils.lerp(this.points.rotation.z, State.rotZ, 0.1);
-        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 180 / State.zoom, 0.1);
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, State.manualZoom, 0.05);
         this.composer.render();
     }
 };
@@ -167,30 +159,33 @@ const NeuralEngine = {
         const d = (i, j) => this.dist(lm[i], lm[j]);
         const iE = d(8, 0) > d(6, 0); const mE = d(12, 0) > d(10, 0);
         const rE = d(16, 0) > d(14, 0); const pE = d(20, 0) > d(18, 0);
-        const tE = d(4, 17) > d(2, 17); 
 
-        if (iE && mE && rE && pE && tE) return "PALM_OPEN"; 
-        if (!iE && !mE && !rE && !pE)   return "FIST_CLOSED";
-        if (iE && !mE && !rE && !pE)    return "INDEX_POINT";
-        if (d(4, 8) < 0.05)             return "OK_SIGN";
-        if (tE && !iE && !mE && !rE && !pE) {
-            return (lm[4].y < lm[3].y) ? "THUMB_UP" : "THUMB_DOWN";
+        // OK Gesture -> Rainbow Mode Toggle
+        if (d(4, 8) < 0.04) { State.rainbowMode = true; return "RAINBOW_ACTIVE"; }
+
+        // 3-Finger Gesture -> Manual Color Cycle
+        if (iE && mE && rE && !pE) {
+            State.rainbowMode = false;
+            State.activeHue = (State.activeHue + 0.005) % 1.0;
+            return "COLOR_CYCLING";
         }
+
+        if (iE && mE && rE && pE) return "PALM_OPEN"; 
+        if (!iE && !mE && !rE && !pE) return "FIST_CLOSED";
         return "TRACKING";
     },
 
     processTwoHands(h1, h2) {
         const d = (a, b) => this.dist(a, b);
         const centerDist = d(h1[9], h2[9]);
-        State.zoom = THREE.MathUtils.clamp(centerDist * 4, 0.5, 4.0);
-        State.rotZ = Math.atan2(h2[9].y - h1[9].y, h2[9].x - h1[9].x);
         
+        // --- PERSISTENT ZOOM CONTROL ---
+        if (centerDist > 0.6) State.manualZoom -= 3; // Spread hands = Zoom In
+        if (centerDist < 0.3) State.manualZoom += 3; // Pinch hands = Zoom Out
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 60, 600);
+
         if (d(h1[8], h2[8]) < 0.08 && d(h1[4], h2[4]) < 0.08) return "HEART_SYNC";
-        if (d(h1[8], h2[4]) < 0.1 && d(h2[8], h1[4]) < 0.1) return "FRAME_SCAN";
-        if (d(h1[0], h2[0]) < 0.15) return "X_BLOCK";
-        if (centerDist > 0.8) { State.isExploded = true; return "EXPAND_VIEW"; }
-        else { State.isExploded = false; }
-        return "DUAL_TRACKING";
+        return "DUAL_NAV";
     }
 };
 
@@ -207,10 +202,8 @@ document.getElementById('start-btn').addEventListener('click', () => {
     hands.onResults(res => {
         const h = res.multiHandLandmarks;
         if (h.length > 0) {
-            // Update hand position state for the tether logic
             State.handPos.x = h[0][9].x;
             State.handPos.y = h[0][9].y;
-
             State.gesture = h.length > 1 ? NeuralEngine.processTwoHands(h[0], h[1]) : NeuralEngine.detectHand(h[0]);
             document.getElementById('subtitle-box').innerText = "SYSTEM: " + State.gesture;
         }
