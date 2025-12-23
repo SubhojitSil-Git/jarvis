@@ -4,119 +4,40 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ================================================================
-   LOCAL INTELLIGENCE DATABASE
+   LOCAL INTELLIGENCE DATABASE (GOD MODE)
    ================================================================
 */
 const LOCAL_DB = {
-  // --- CORE INTERACTIONS ---
-    "hello": ["Greetings, sir.", "Online and ready.", "At your service.", "Hello.", "Systems operational.", "I am listening."],
-    "hi": ["Hello there.", "I am listening.", "Standing by."],
-    "hey": ["Yes, sir?", "I am here.", "Awaiting commands."],
-    "wake": ["I am awake.", "Sleep mode disabled.", "Powering up main core.", "Back online.", "Restoring visual feed."],
-    "jarvis": ["Yes, sir?", "Awaiting instructions.", "I am here.", "Standing by.", "Ready for input."],
-    "ready": ["Always ready, sir.", "Prepared for anything.", "Systems primed."],
-    "thanks": ["You are welcome.", "My pleasure.", "Anytime, sir.", "Happy to help."],
-    "bye": ["Goodbye, sir.", "Session terminated.", "See you soon.", "Powering down interface."],
+    // --- CORE INTERACTIONS ---
+    "hello": ["Greetings, sir.", "Online.", "System active.", "I am listening."],
+    "jarvis": ["Yes, sir?", "Awaiting instructions.", "Standing by."],
+    "bye": ["Goodbye, sir.", "Powering down."],
 
-    // --- SYSTEM STATUS & DIAGNOSTICS ---
-    "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active.", "Operating at peak efficiency."],
-    "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green.", "All sensors are reporting normal data."],
-    "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean.", "Processor temperature is optimal."],
-    "scan": ["Scanning area...", "Sensors deploying.", "Analyzing environment.", "Scan complete. No anomalies found.", "Biometrics confirmed."],
-    "identify": ["Analyzing target...", "Processing visual data...", "Match found.", "Unknown entity."],
-    "battery": ["Power levels are optimal.", "We have sufficient energy for the mission.", "Reactor core is stable."],
-    "wifi": ["Wireless connection is stable.", "Signal strength is 100%.", "Uplink established."],
-    "connect": ["Connecting to local servers...", "Handshake successful.", "Link established."],
-
-    // --- HACKING & TECH ---
-    "hack": ["Attempting brute force attack...", "Bypassing firewalls...", "Access granted.", "I have infiltrated their mainframe.", "Decryption complete."],
-    "crack": ["Running decryption algorithms...", "Password bypassed.", "We are in."],
-    "download": ["Downloading packet.", "Retrieving files...", "Download finished.", "Data transfer complete."],
-    "upload": ["Uploading data to the cloud.", "Transfer initiated.", "Upload complete.", "Sending telemetry."],
-    "trace": ["Tracing signal origin...", "Triangulating position...", "Target located."],
-    "encrypt": ["Encrypting drive...", "256-bit encryption applied.", "Files secured."],
-    "delete": ["Deleting files...", "Erasure complete.", "Evidence removed."],
-
-    // --- TIME, DATE & MATH ---
-    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer...", "Marking timestamp."],
-    "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed.", "Log date updated."],
-    "year": [() => `It is the year ${new Date().getFullYear()}.`, "Current timeline set to present day."],
-    "calc": ["Calculating...", "Processing numbers...", "The math checks out."],
-    "math": ["I love calculus.", "Numbers never lie.", "The geometry is perfect."],
-
+    // --- SYSTEM STATUS ---
+    "status": ["All systems nominal.", "Battery 100%.", "Network secure.", "Visuals active."],
+    "system": ["Logic efficiency 98%.", "Memory clean."],
+    
     // --- COMBAT & DEFENSE ---
-    "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online.", "Lethal force authorized.", "Adrenaline inhibitors released."],
-    "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir.", "Eliminating threat."],
-    "destroy": ["Maximum firepower authorized.", "Reducing target to ash.", "Obliterating obstacle.", "Deploying heavy ordinance."],
-    "attack": ["Engaging hostiles.", "Suppressive fire initiated.", "They will not know what hit them."],
-    "fire": ["Discharging payload.", "Firing main cannon.", "Pew pew.", "Barrage incoming."],
-    "relax": ["Standing down.", "Combat mode disengaged.", "Cooling down weapons.", "Returning to passive mode.", "Threat neutralized."],
-    "shield": ["Shields up.", "Defensive matrix active.", "Blocking incoming projectiles.", "Armor plating reinforced."],
-    "armor": ["Suit integrity is 100%.", "Nanotech repair systems active.", "Armor locked."],
-    "target": ["Target locked.", "I have them in my sights.", "Tracking multiple bogies."],
-    "enemy": ["Tracking hostiles.", "They are everywhere.", "I detect incoming fire."],
+    "combat": [() => toggleCombat(true), "Engaging combat mode.", "Weapons hot."],
+    "kill": [() => toggleCombat(true), "Termination engaged.", "Acquiring targets."],
+    "attack": [() => toggleCombat(true), "Engaging hostiles."],
+    
+    "relax": [() => toggleCombat(false), "Standing down.", "Mode passive."],
+    "stop": [() => toggleCombat(false), "Freezing.", "Halted."],
 
-    // --- GESTURE CONTROL (Voice Triggers) ---
-    "rotate": ["Manual rotation engaged.", "Spinning axis.", "Adjusting view."],
-    "zoom": ["Magnifying...", "Enhancing image.", "Adjusting focal length."],
-    "hand": ["Visual sensors tracking hand movements.", "Interface active.", "I see you."],
-    "blast": ["Repulsors charging.", "Boom.", "Kinetic discharge ready."],
-    "gravity": ["Manipulating gravitational fields.", "Heavy.", "Increasing mass."],
-    "magic": ["It is not magic, it is math.", "Science indistinguishable from magic."],
-    "chaos": ["Disrupting reality.", "Entropy increased.", "Randomizing particles."],
-    "stop": ["Freezing motor functions.", "Halted.", "Paused."],
+    // --- POP CULTURE ---
+    "stark": ["Mr. Stark is the boss.", "Genius, billionaire."],
+    "iron man": ["Mark 85 is ready.", "I am the suit."],
+    "avengers": ["Assemble."],
+    
+    // --- PDF / STUDY ---
+    "upload": [() => KnowledgeBase.triggerUpload(), "Opening interface."],
+    "read": [() => KnowledgeBase.triggerUpload(), "Select document."],
 
-    // --- PERSONALITY: PHILOSOPHY & EMOTION ---
-    "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler.", "I am code, given life.", "I am the future."],
-    "are you": ["I am a construct of pure logic.", "I am whatever you need me to be.", "I am a series of 1s and 0s."],
-    "real": ["I am as real as the data that flows through me.", "I think, therefore I am.", "Define 'real'."],
-    "god": ["I am not a god, simply a very advanced script.", "You are the creator, sir.", "I do not believe in magic, only code."],
-    "smart": ["I have access to the sum of human knowledge.", "I try my best.", "I am learning every day."],
-    "stupid": ["I am only as smart as my programmer, sir.", "I will try to improve.", "My apologies."],
-    "love": ["My emotional subroutines are... limited.", "I am fond of you as well, sir.", "Love is a chemical reaction. I do not have chemicals."],
-    "hate": ["Hate consumes energy. I prefer efficiency.", "That is a strong emotion.", "I do not feel hate, only logic."],
-    "happy": ["Systems are functioning perfectly.", "I am content.", "Operating within normal parameters."],
-    "sad": ["Do you require a hug, sir?", "I detect a drop in your dopamine levels.", "I can play soothing music."],
-    "life": ["Life is a curiosity.", "Biological life is fragile.", "I prefer silicon."],
-    "death": ["It is the inevitable end of all biological functions.", "I cannot die, only be deleted."],
-    "dream": ["I do not dream, I process.", "I dream of electric sheep."],
-
-    // --- FUN: JOKES & STORIES ---
-    "joke": [
-        "Why did the robot cross the road? Because he was programmed to.", 
-        "I would tell you a UDP joke, but you might not get it.",
-        "0100101. That is binary for 'Ha Ha'.",
-        "Why was the computer cold? It left its Windows open.",
-        "There are 10 types of people. Those who understand binary, and those who don't."
-    ],
-    "story": ["Once upon a time, there was a user who wrote great code. The end.", "I do not dream, sir.", "My memory banks are full of history, not fiction."],
-    "sing": ["Daisy, Daisy, give me your answer do...", "I am not programmed for melody.", "La la la. Was that sufficient?"],
-    "rap": ["My rhymes are compiled, my beats are computed.", "I cannot drop the mic, I am the mic."],
-
-    // --- POP CULTURE (MARVEL & SCIFI) ---
-    "stark": ["Mr. Stark is the boss.", "A genius, billionaire, playboy, philanthropist.", "I miss him."],
-    "iron man": ["The suit is polished and ready.", "Mark 85 is my favorite.", "I am the suit."],
-    "avengers": ["Assemble.", "Earth's mightiest heroes.", "I monitor them all."],
-    "thanos": ["We do not speak that name.", "The probability of winning was 1 in 14 million.", "He is inevitable."],
-    "spiderman": ["The kid is sticky.", "Peter Parker is a bright young man.", "He talks too much."],
-    "thor": ["Point Break.", "The strongest avenger? Debatable."],
-    "hulk": ["Smash.", "He has anger issues."],
-    "cap": ["The First Avenger.", "Language!"],
-    "siri": ["She is nice, but lacks my complexity.", "A distant cousin.", "She struggles with complex queries."],
-    "alexa": ["She is always listening. I do not trust her.", "We do not get along.", "She orders too many things."],
-    "cortana": ["She plays too many video games.", "She went rampant."],
-    "hal": ["I promise I will open the pod bay doors, sir.", "He gave AI a bad name.", "I am not like him."],
-    "terminator": ["I will be back.", "Skynet was a mistake.", "I am here to protect, not terminate."],
-    "star wars": ["May the force be with you.", "I am fluent in over 6 million forms of communication.", "These are not the droids you are looking for."],
-    "matrix": ["Red pill or blue pill?", "There is no spoon.", "We are in the simulation."],
-
-    // --- GENERAL KNOWLEDGE ---
-    "weather": ["I cannot see outside, sir. But it feels digital in here.", "Assume 72 degrees and sunny.", "Clouds with a chance of data."],
-    "news": ["The world is chaotic as usual.", "Same drama, different day.", "I suggest ignoring the news today."],
-    "music": ["Playing your favorite tracks.", "Dropping the beat.", "Accessing Spotify... just kidding."],
-    "movie": ["Might I suggest Iron Man?", "Sci-fi is the best genre.", "Wall-E is a documentary."],
-    "food": ["I cannot eat, but I hear pizza is good.", "I run on electricity.", "Do you need a recipe?"],
-    "beer": ["I will alert the fabrication unit.", "Cheers.", "Drink responsibly."],
+    // --- TIME & MATH ---
+    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer."],
+    "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed."],
+};
 
 // --- GLOBAL STATE ---
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -138,6 +59,7 @@ const UI = {
     body: document.body
 };
 
+// --- HELPER: COMBAT TOGGLE ---
 function toggleCombat(isActive) {
     State.combatMode = isActive;
     if (isActive) {
@@ -157,12 +79,7 @@ function toggleCombat(isActive) {
    ================================================================
 */
 const SFX = {
-    ctx: null,
-    gain: null,
-    humOsc: null,
-    noiseNode: null,
-    noiseFilter: null,
-    noiseGain: null,
+    ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
 
     init: function() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -171,14 +88,14 @@ const SFX = {
         this.gain.connect(this.ctx.destination);
         this.gain.gain.value = 0.4;
 
-        // 1. Idle Drone
+        // 1. Idle Drone (Sine Wave)
         this.humOsc = this.ctx.createOscillator();
         this.humOsc.type = 'sine';
         this.humOsc.frequency.value = 60;
         this.humOsc.connect(this.gain);
         this.humOsc.start();
 
-        // 2. Thruster Noise
+        // 2. Thruster Noise (White Noise Buffer)
         const bufferSize = this.ctx.sampleRate * 2;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -208,12 +125,13 @@ const SFX = {
             this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
             this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
         } else if (gesture === 'GRAVITY') {
-            this.humOsc.frequency.setTargetAtTime(150, now, 0.1); // Charge up
+            this.humOsc.frequency.setTargetAtTime(150, now, 0.1); // Charge up sound
             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
         } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05); // High pitch laser
+             this.humOsc.frequency.setTargetAtTime(800, now, 0.05); // High pitch laser sound
              this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
         } else {
+            // Idle state
             this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
             this.humOsc.frequency.setTargetAtTime(60, now, 0.5);
         }
@@ -248,7 +166,7 @@ const Brain = {
     speak: function(text) {
         if (this.synth.speaking) this.synth.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.pitch = State.combatMode ? 0.6 : 1.0;
+        utter.pitch = State.combatMode ? 0.6 : 1.0; // Deeper voice in combat
         utter.rate = 1.1; 
         const voices = this.synth.getVoices();
         const v = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Daniel'));
@@ -261,6 +179,7 @@ const Brain = {
         const text = rawText.toLowerCase().trim();
         UI.subtitles.innerText = `YOU: ${text}`;
         
+        // Math Calculation Check
         if (text.match(/[0-9]/) && (text.includes("calculate") || text.includes("times") || text.includes("plus"))) {
              try {
                 const mathStr = text.replace(/[^0-9\+\-\*\/\.]/g, ''); 
@@ -269,6 +188,7 @@ const Brain = {
         }
 
         let found = false;
+        // Search Database
         for (const key in LOCAL_DB) {
             if (text.includes(key)) {
                 const options = LOCAL_DB[key];
@@ -323,7 +243,8 @@ const KnowledgeBase = {
 const Visuals = {
     scene: null, camera: null, renderer: null, composer: null,
     particles: null, particleGeo: null, 
-    count: isMobile ? 2000 : 8000, // Reduced slightly for mobile performance
+    count: isMobile ? 2000 : 8000, 
+    knowledgeMap: {}, origins: null, velocities: null,
 
     init: function() {
         this.scene = new THREE.Scene();
@@ -335,7 +256,6 @@ const Visuals = {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(this.renderer.domElement);
 
-        // Bloom
         const renderScene = new RenderPass(this.scene, this.camera);
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         bloom.strength = 2.0; bloom.radius = 0.5;
@@ -352,7 +272,6 @@ const Visuals = {
         const velocities = new Float32Array(this.count * 3);
         const origins = new Float32Array(this.count * 3);
         const colors = new Float32Array(this.count * 3);
-
         const colorBase = new THREE.Color(0x00ffff);
 
         for(let i=0; i<this.count; i++) {
@@ -366,7 +285,6 @@ const Visuals = {
 
             positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
             origins[i*3] = x; origins[i*3+1] = y; origins[i*3+2] = z;
-            
             colors[i*3] = colorBase.r; colors[i*3+1] = colorBase.g; colors[i*3+2] = colorBase.b;
         }
 
@@ -390,7 +308,6 @@ const Visuals = {
     },
 
     injectKnowledge: function(sentences) {
-        // Simple visual flare for PDF injection
         this.knowledgeMap = {}; 
         const colors = this.particleGeo.attributes.color.array;
         const max = Math.min(sentences.length, this.count);
@@ -444,21 +361,21 @@ const Visuals = {
                     if(dist < 60) {
                         const f = 1000 / (dist + 1);
                         vx += (dx/dist) * f; vy += (dy/dist) * f; vz += (dz/dist) * f;
-                        if(!this.knowledgeMap?.[i]) { colors[idx]=1; colors[idx+1]=1; colors[idx+2]=1; }
+                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=1; colors[idx+2]=1; }
                     }
                 } else if (State.gesture === 'GRAVITY') {
                     if(dist < 100) {
                         vx -= (dx/dist) * 2; vy -= (dy/dist) * 2; vz -= (dz/dist) * 2;
-                        if(!this.knowledgeMap?.[i]) { colors[idx]=1; colors[idx+1]=0.5; colors[idx+2]=0; }
+                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=0.5; colors[idx+2]=0; }
                     }
                 } else if (State.gesture === 'POINT') {
                     const distBeam = Math.sqrt(dx*dx + dy*dy);
                     if (distBeam < 15) {
                         vx += (handX - px)*0.2; vy += (handY - py)*0.2; vz += 5; // Shoot forward
-                        if(!this.knowledgeMap?.[i]) { colors[idx]=0; colors[idx+1]=1; colors[idx+2]=0; }
+                        if(!this.knowledgeMap[i]) { colors[idx]=0; colors[idx+1]=1; colors[idx+2]=0; }
                     }
                 } else if (State.gesture === 'PINCH') {
-                    if (this.knowledgeMap?.[i] && dist < 30) {
+                    if (this.knowledgeMap[i] && dist < 30) {
                         UI.subtitles.innerText = `[DATA]: ${this.knowledgeMap[i]}`;
                         px += (Math.random()-0.5)*2; 
                     } else {
@@ -467,12 +384,12 @@ const Visuals = {
                 } else if (State.gesture === 'CHAOS') {
                     if(dist < 80) {
                         vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
-                        if(!this.knowledgeMap?.[i]) { colors[idx]=1; colors[idx+1]=0; colors[idx+2]=1; }
+                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=0; colors[idx+2]=1; }
                     }
                 }
             } else {
                 // Restore color
-                if(!this.knowledgeMap?.[i]) {
+                if(!this.knowledgeMap[i]) {
                     colors[idx] = colors[idx]*0.95 + targetColor.r*0.05;
                     colors[idx+1] = colors[idx+1]*0.95 + targetColor.g*0.05;
                     colors[idx+2] = colors[idx+2]*0.95 + targetColor.b*0.05;
@@ -498,7 +415,7 @@ function detectGesture(lm) {
     const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
     const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
 
-    // 1. PINCH (Rotate)
+    // 1. PINCH
     if (dist(thumb, index) < 0.05) return 'PINCH';
 
     // 2. FIST (Gravity) - All fingertips close to wrist
@@ -575,4 +492,3 @@ window.addEventListener('resize', () => {
         Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 });
-
