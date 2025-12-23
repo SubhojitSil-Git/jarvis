@@ -2,25 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JARVIS MK.VIII: SONIC GESTURE</title>
+    <title>JARVIS MARK VIII: CINEMATIC HOLOGRAPH</title>
     <link rel="stylesheet" href="do.css">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } } </script>
 </head>
-<body>
+<body class="hologram-mode">
+    <div id="scanline-overlay"></div>
+    
     <div id="start-overlay">
-        <button id="start-btn">ENGAGE NEURAL & AUDIO LINK</button>
-        <p style="color:#0ff; margin-top:10px;">Music reaction requires microphone access</p>
+        <div class="glitch-title">JARVIS MK.VIII</div>
+        <button id="start-btn">INITIALIZE NEURAL LINK</button>
+        <p>SYSTEM READY: 32-GESTURE MATRIX / SONIC SYNC</p>
     </div>
+
     <div id="hud-layer">
         <div id="reticle"></div>
         <div class="hud-panel top-left">
-            <h1>JARVIS MK.VIII</h1>
-            <div class="row">MATRIX: <span id="gesture-status">IDLE</span></div>
+            <div class="scanner-bar"></div>
+            <h1>CORE STATUS: <span id="gesture-status" style="color:#0ff">STABLE</span></h1>
+            <div class="row">AUDIO SYNC: <span id="audio-status" style="color:#0f0">ACTIVE</span></div>
+            <div class="row">LINK ID: <span id="link-id">#STARK-992</span></div>
         </div>
-        <div id="subtitle-box">AWAITING BIOMETRIC FEED</div>
+        <div id="subtitle-box">AWAITING BIOMETRIC AUTHENTICATION</div>
     </div>
+
     <video id="video-input" style="display:none"></video>
     <script type="module" src="do.js"></script>
 </body>
