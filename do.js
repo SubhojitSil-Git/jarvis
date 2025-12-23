@@ -46,7 +46,8 @@ const Engine3D = {
     
     init() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        // UPDATED: Near plane set to 0.01 to allow deep zooming without clipping
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 2000);
         this.camera.position.z = State.manualZoom;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -65,7 +66,6 @@ const Engine3D = {
         this.originData = new Float32Array(State.particles.count * 3);
 
         for (let i = 0; i < State.particles.count; i++) {
-            // High density core (first 6000) and wispy outer shell
             const r = (i < 6000) ? Math.random() * 25 : 55 + Math.random() * 20;
             const t = Math.random() * Math.PI * 2;
             const p = Math.acos(2 * Math.random() - 1);
@@ -80,7 +80,6 @@ const Engine3D = {
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
         
-        // Soft texture for the "grassy/fuzzy" effect
         const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
 
         const mat = new THREE.PointsMaterial({
@@ -101,12 +100,11 @@ const Engine3D = {
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(new RenderPass(this.scene, this.camera));
         
-        // Setup the Core Glow (Bloom)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight), 
-            0.5, // Initial faint strength
-            0.4, // Radius
-            0.85 // Threshold
+            0.5, 
+            0.4, 
+            0.85 
         );
         this.composer.addPass(this.bloomPass);
     },
@@ -122,7 +120,6 @@ const Engine3D = {
             bass = State.audio.dataArray[0] / 255;
         }
 
-        // Modulation of core glow: Faint steady glow + audio reaction
         const targetGlow = 0.4 + (bass * 0.7);
         this.bloomPass.strength = THREE.MathUtils.lerp(this.bloomPass.strength, targetGlow, 0.1);
 
@@ -132,7 +129,6 @@ const Engine3D = {
             const idx = i * 3;
             let tx = this.originData[idx], ty = this.originData[idx+1], tz = this.originData[idx+2];
 
-            // Subtle "grassy" jitter
             const jitter = Math.sin(Date.now() * 0.002 + i) * 0.3;
             tx += jitter; ty += jitter;
 
@@ -198,7 +194,8 @@ const NeuralEngine = {
         const centerDist = d(h1[9], h2[9]);
         if (centerDist > 0.55) State.manualZoom -= (centerDist * 20);
         if (centerDist < 0.35) State.manualZoom += ((0.5 - centerDist) * 20);
-        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 50, 600);
+        // UPDATED: Clamp min zoom to 1 to allow going inside the core
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 1, 600);
         if (d(h1[8], h2[8]) < 0.08 && d(h1[4], h2[4]) < 0.08) return "HEART_SYNC";
         return "DUAL_NAV";
     }
