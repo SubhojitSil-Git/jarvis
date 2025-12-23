@@ -3,72 +3,79 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
+// --- STARK AUDIO ENGINE ---
+const SFX = {
+    ctx: null,
+    osc: null,
+    gain: null,
+    init() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    },
+    // High-pitched data beep
+    ping() {
+        if(!this.ctx) return;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(880, this.ctx.currentTime);
+        g.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + 0.1);
+    },
+    // Deep humming sound for zoom
+    zoomVrm(factor) {
+        if(!this.ctx) return;
+        const freq = 100 + (factor * 200);
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + 0.2);
+    }
+};
+
 const State = {
-    handActive: false,
-    handPos: new THREE.Vector3(),
-    gesture: 'IDLE',
-    combatMode: false,
-    isSpeaking: false,
-    lastPinchX: 0
+    hands: [],
+    zoom: 1.0,
+    baseDist: null,
+    isPinching: false,
+    colorTarget: new THREE.Color(0x00ffff), // Idle Blue
+    activeColor: new THREE.Color(0xffaa00)  // Active Gold
 };
 
-// --- LOCAL INTELLIGENCE ---
-const LOCAL_DB = {
-    "hello": ["Greetings, sir. Systems nominal.", "Ready for work."],
-    "status": ["All systems green. Reactor at 100%.", "Core temperature stable."],
-    "combat": ["Engaging combat protocols.", "Weapons hot. Stay focused."],
-    "relax": ["Standing down. Powering down weapons."],
-    "who": ["I am JARVIS. Your digital shadow."],
-    "joke": ["I'd tell a joke, but my humor subroutines are being used for math."],
-    "sleep": [() => { setTimeout(() => location.reload(), 2000); return "Going offline. Goodbye, sir."; }]
-};
-
-// --- VISUAL ENGINE ---
 const Visuals = {
-    scene: null, camera: null, renderer: null, composer: null,
-    points: null,
+    scene: null, camera: null, renderer: null, points: null,
     
     init() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 20, 100);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+        this.camera.position.z = 150;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(this.renderer.domElement);
 
-        // Post Processing (Glow)
-        const renderPass = new RenderPass(this.scene, this.camera);
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        this.composer = new EffectComposer(this.renderer);
-        this.composer.addPass(renderPass);
-        this.composer.addPass(bloomPass);
-
         this.createHologram();
-        this.addEnvironment();
-    },
-
-    addEnvironment() {
-        const grid = new THREE.GridHelper(200, 20, 0x00ffff, 0x002222);
-        grid.position.y = -50;
-        this.scene.add(grid);
     },
 
     createHologram() {
-        const count = 5000;
+        // --- ADAPTIVE SCALING ---
+        const isMobile = window.innerWidth < 768;
+        const sphereRadius = isMobile ? 40 : 75; // Bigger for PC/Tablet
+
+        const count = isMobile ? 3000 : 8000;
         const geo = new THREE.BufferGeometry();
         const pos = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
         
         for(let i=0; i<count; i++) {
-            const r = 40;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-            pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-            pos[i*3+2] = r * Math.cos(phi);
-            
+            pos[i*3] = sphereRadius * Math.sin(phi) * Math.cos(theta);
+            pos[i*3+1] = sphereRadius * Math.sin(phi) * Math.sin(theta);
+            pos[i*3+2] = sphereRadius * Math.cos(phi);
             colors[i*3] = 0; colors[i*3+1] = 1; colors[i*3+2] = 1;
         }
         
@@ -76,11 +83,7 @@ const Visuals = {
         geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
         const mat = new THREE.PointsMaterial({
-            size: 0.7, 
-            vertexColors: true, 
-            transparent: true, 
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
+            size: 0.8, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
         });
         
         this.points = new THREE.Points(geo, mat);
@@ -92,158 +95,95 @@ const Visuals = {
         requestAnimationFrame(() => this.animate());
         
         const posAttr = this.points.geometry.attributes.position;
-        const time = Date.now() * 0.001;
+        const colAttr = this.points.geometry.attributes.color;
 
-        // Auto-rotation
-        if (State.gesture !== 'PINCH') {
-            this.points.rotation.y += 0.005;
+        // Apply Zoom to Camera
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, 150 / State.zoom, 0.1);
+        document.getElementById('zoom-level').innerText = State.zoom.toFixed(1) + "x";
+
+        // Global Color Shift
+        const target = State.isPinching ? State.activeColor : State.colorTarget;
+        
+        for (let i = 0; i < colAttr.count; i++) {
+            colAttr.array[i*3] += (target.r - colAttr.array[i*3]) * 0.1;
+            colAttr.array[i*3+1] += (target.g - colAttr.array[i*3+1]) * 0.1;
+            colAttr.array[i*3+2] += (target.b - colAttr.array[i*3+2]) * 0.1;
+            
+            // Subtle pulse
+            const x = this.origPos[i*3];
+            const y = this.origPos[i*3+1];
+            const z = this.origPos[i*3+2];
+            posAttr.array[i*3] = x + Math.sin(Date.now()*0.002 + i)*0.5;
         }
 
-        // Voice Reactivity (Pulse)
-        const scale = State.isSpeaking ? 1.2 + Math.sin(time*10)*0.1 : 1.0;
-        this.points.scale.set(scale, scale, scale);
-
-        for (let i = 0; i < posAttr.count; i++) {
-            let x = this.origPos[i*3];
-            let y = this.origPos[i*3+1];
-            let z = this.origPos[i*3+2];
-
-            // Hand Interaction
-            if (State.handActive) {
-                const dx = x - State.handPos.x;
-                const dy = y - State.handPos.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-
-                if (State.gesture === 'BLAST' && dist < 30) {
-                    x += dx * 2; y += dy * 2;
-                } else if (State.gesture === 'GRAVITY' && dist < 60) {
-                    x -= dx * 0.5; y -= dy * 0.5;
-                }
-            }
-
-            posAttr.array[i*3] += (x - posAttr.array[i*3]) * 0.1;
-            posAttr.array[i*3+1] += (y - posAttr.array[i*3+1]) * 0.1;
-        }
-
+        this.points.rotation.y += 0.003;
         posAttr.needsUpdate = true;
-        this.composer.render();
+        colAttr.needsUpdate = true;
+        this.renderer.render(this.scene, this.camera);
     }
 };
 
-// --- GESTURE ENGINE ---
-function detectGesture(lm) {
-    const dist = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y);
-    
-    const isPinch = dist(4, 8) < 0.04;
-    const isFist = dist(8, 0) < 0.1;
-    const isRock = dist(8, 0) > 0.2 && dist(20, 0) > 0.2 && dist(12, 0) < 0.15;
-
-    if (isPinch) return 'PINCH';
-    if (isFist) return 'GRAVITY';
-    if (isRock) return 'CHAOS';
-    return 'BLAST';
-}
-
-// --- VOICE ENGINE ---
-const Brain = {
-    synth: window.speechSynthesis,
-    
-    speak(text) {
-        if (this.synth.speaking) this.synth.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.pitch = 0.9;
-        utter.rate = 1.0;
-        utter.onstart = () => State.isSpeaking = true;
-        utter.onend = () => State.isSpeaking = false;
-        this.synth.speak(utter);
-        document.getElementById('subtitle-box').innerText = `JARVIS: ${text}`;
-    },
-
-    process(input) {
-        const text = input.toLowerCase();
-        if (text.includes("combat")) { document.body.classList.add('combat'); }
-        if (text.includes("relax")) { document.body.classList.remove('combat'); }
-
-        for (let key in LOCAL_DB) {
-            if (text.includes(key)) {
-                const res = LOCAL_DB[key];
-                const final = typeof res[0] === 'function' ? res[0]() : res[Math.floor(Math.random()*res.length)];
-                this.speak(final);
-                return;
-            }
-        }
-    }
-};
-
-// --- INITIALIZATION ---
+// --- START APP ---
 document.getElementById('start-btn').addEventListener('click', async () => {
+    SFX.init();
     document.getElementById('start-overlay').style.display = 'none';
-    
     Visuals.init();
     Visuals.animate();
 
-    const video = document.getElementById('video-input');
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7 });
-    
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6 });
+
     hands.onResults(res => {
-        if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
-            State.handActive = true;
-            const lm = res.multiHandLandmarks[0];
-            
-            // Map 0-1 coords to Three.js Space
-            const x = (0.5 - lm[9].x) * 150;
-            const y = (0.5 - lm[9].y) * 100;
-            State.handPos.set(x, y, 0);
+        State.hands = res.multiHandLandmarks || [];
+        
+        // --- TWO HAND ZOOM LOGIC ---
+        if (State.hands.length === 2) {
+            const h1 = State.hands[0][9];
+            const h2 = State.hands[1][9];
+            const currentDist = Math.hypot(h1.x - h2.x, h1.y - h2.y);
 
-            // UI Reticle
-            const ret = document.getElementById('reticle');
-            ret.style.display = 'block';
-            ret.style.left = `${(1 - lm[9].x) * 100}%`;
-            ret.style.top = `${lm[9].y * 100}%`;
-
-            State.gesture = detectGesture(lm);
-            
-            // Pinch to Rotate Logic
-            if (State.gesture === 'PINCH') {
-                const delta = (lm[9].x - State.lastPinchX) * 10;
-                Visuals.points.rotation.y += delta;
+            if (!State.baseDist) {
+                State.baseDist = currentDist;
+            } else {
+                const diff = (currentDist / State.baseDist);
+                const oldZoom = State.zoom;
+                State.zoom = THREE.MathUtils.clamp(diff, 0.5, 3.0);
+                
+                // Play zoom sound if significant change
+                if (Math.abs(oldZoom - State.zoom) > 0.05) SFX.zoomVrm(State.zoom);
             }
-            State.lastPinchX = lm[9].x;
-
-            document.getElementById('gesture-status').innerText = State.gesture;
+            document.getElementById('hand1-status').innerText = "TRACKING";
+            document.getElementById('hand2-status').innerText = "TRACKING";
         } else {
-            State.handActive = false;
-            document.getElementById('reticle').style.display = 'none';
+            State.baseDist = null;
+            document.getElementById('hand2-status').innerText = "OFFLINE";
+        }
+
+        // --- SINGLE HAND PINCH COLOR LOGIC ---
+        if (State.hands.length > 0) {
+            const h = State.hands[0];
+            const pinchDist = Math.hypot(h[4].x - h[8].x, h[4].y - h[8].y);
+            
+            if (pinchDist < 0.04) {
+                if (!State.isPinching) SFX.ping();
+                State.isPinching = true;
+            } else {
+                State.isPinching = false;
+            }
+            document.getElementById('hand1-status').innerText = "TRACKING";
         }
     });
 
+    const video = document.getElementById('video-input');
     const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } 
+        video: { facingMode: "user", width: 640, height: 480 } 
     });
     video.srcObject = stream;
     video.play();
 
-    const processVideo = async () => {
+    const cameraControl = async () => {
         await hands.send({image: video});
-        requestAnimationFrame(processVideo);
+        requestAnimationFrame(cameraControl);
     };
-    processVideo();
-
-    // Voice Setup
-    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (Speech) {
-        const rec = new Speech();
-        rec.continuous = true;
-        rec.onresult = (e) => Brain.process(e.results[e.results.length-1][0].transcript);
-        rec.start();
-        document.getElementById('voice-status').innerText = "ONLINE";
-    }
-});
-
-window.addEventListener('resize', () => {
-    Visuals.camera.aspect = window.innerWidth / window.innerHeight;
-    Visuals.camera.updateProjectionMatrix();
-    Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
+    cameraControl();
 });
