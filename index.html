@@ -1,63 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS MARK VI: SENTIENT</title>
-    <link rel="stylesheet" href="do.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  />
+  <title>JARVIS MK-VI</title>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+  <link rel="stylesheet" href="do.css" />
+
+  <!-- MediaPipe Hands -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+  <!-- Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
+
 <body>
+  <div id="start-overlay">
+    <button id="start-btn">INITIALIZE SYSTEM</button>
+    <div class="sys-msg">NEURAL LINK STANDBY…</div>
+  </div>
 
-    <div id="start-overlay">
-        <div class="scanner-line"></div>
-        <button id="start-btn">INITIALIZE SYSTEM</button>
-        <div class="sys-msg">NEURAL LINK STANDBY...</div>
+  <div id="hud-layer">
+    <div id="reticle">
+      <div id="reticle-inner"></div>
     </div>
 
-    <div id="hud-layer">
-        <div id="reticle"><div id="reticle-inner"></div></div>
-        
-        <div id="subtitle-box">AWAITING INPUT...</div>
+    <div id="subtitle-box">AWAITING INPUT…</div>
 
-        <div class="hud-panel top-left">
-            <h1>JARVIS <span class="version">mk.6</span></h1>
-            <div class="row">VOICE: <span id="voice-status">OFFLINE</span></div>
-            <div class="row">GESTURE: <span id="gesture-status">NONE</span></div>
-            <div class="row">AI BRAIN: <span id="ai-status">LOCAL</span></div>
-        </div>
-
-        <div class="hud-panel bottom-right">
-            <h1>VISUAL INPUT</h1>
-            <div class="cmd-item" id="cmd-palm">[🖐 PALM] REPULSOR</div>
-            <div class="cmd-item" id="cmd-fist">[✊ FIST] GRAVITY</div>
-            <div class="cmd-item" id="cmd-point">[☝ POINT] LASER</div>
-            <div class="cmd-item" id="cmd-pinch">[👌 PINCH] READ</div>
-            <div class="cmd-item" id="cmd-rock">[🤘 ROCK] CHAOS</div>
-        </div>
+    <div class="hud-panel top-left">
+      <h1>JARVIS <span class="version">mk.6</span></h1>
+      <div class="row">GESTURE: <span id="gesture-status">IDLE</span></div>
     </div>
 
-    <video id="video-input" playsinline style="display: none;"></video>
-    <input type="file" id="pdf-upload" accept="application/pdf" style="display: none;">
+    <div class="hud-panel bottom-right">
+      <h1>GESTURES</h1>
+      <div class="cmd-item">🖐 PALM — REPULSOR</div>
+      <div class="cmd-item">✊ FIST — GRAVITY</div>
+      <div class="cmd-item">👌 PINCH — FREEZE</div>
+    </div>
+  </div>
 
-    <script type="module" src="do.js"></script>
+  <video id="video-input" playsinline></video>
+
+  <script type="module" src="do.js"></script>
 </body>
 </html>
