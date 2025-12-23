@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS MK.7 (BETA) </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>JARVIS MK.7 - MOBILE</title>
     
     <link rel="stylesheet" href="do.css">
 
@@ -25,38 +25,33 @@
 
     <div id="start-overlay">
         <h1 class="title">J.A.R.V.I.S.</h1>
-        <button id="start-btn">INITIALIZE SYSTEM</button>
-        <p class="warning">Ensure Microphone and Camera permissions are allowed.</p>
+        <button id="start-btn">INITIALIZE</button>
+        <p class="warning">Allow Camera & Microphone access.</p>
     </div>
 
     <div id="hud-layer">
         <div id="reticle"><div id="reticle-inner"></div></div>
-        
         <div id="subtitle-box">AWAITING INPUT...</div>
 
         <div class="hud-panel top-left">
-            <h1>JARVIS MK-7</h1>
-            <div class="row">VOICE: <span id="voice-status" style="color:red">OFFLINE</span></div>
-            <div class="row">GESTURE: <span id="gesture-status">IDLE</span></div>
-            <div class="row">BRAIN: <span id="ai-status">LOCAL CORE</span></div>
+            <h1>STATUS</h1>
+            <div class="row">VOICE: <span id="voice-status" style="color:red">OFF</span></div>
+            <div class="row">HAND: <span id="gesture-status">IDLE</span></div>
         </div>
 
         <div class="hud-panel bottom-right">
-            <h1>GESTURE CONTROLS</h1>
-            <div class="cmd-item" id="cmd-palm">[ 🖐 PALM ] BLAST</div>
-            <div class="cmd-item" id="cmd-fist">[ ✊ FIST ] GRAVITY</div>
-            <div class="cmd-item" id="cmd-pinch">[ 👌 PINCH ] ROTATE</div>
-            <div class="cmd-item" id="cmd-victory">[ ✌️ PEACE ] ZOOM IN</div>
-            <div class="cmd-item" id="cmd-three">[ 🖖 THREE ] ZOOM OUT</div>
-            <div class="cmd-item" id="cmd-point">[ ☝ POINT ] TRACTOR</div>
-            <div class="cmd-item" id="cmd-rock">[ 🤘 ROCK ] CHAOS</div>
+            <h1>COMMANDS</h1>
+            <div class="cmd-item" id="cmd-palm">🖐 BLAST</div>
+            <div class="cmd-item" id="cmd-fist">✊ GRAVITY</div>
+            <div class="cmd-item" id="cmd-pinch">👌 ROTATE</div>
+            <div class="cmd-item" id="cmd-victory">✌️ ZOOM IN</div>
+            <div class="cmd-item" id="cmd-point">☝ TRACTOR</div>
         </div>
     </div>
 
-    <video id="video-input" style="display: none;"></video>
+    <video id="video-input" style="display: none;" playsinline webkit-playsinline></video>
+    <input type="file" id="pdf-upload" accept="application/pdf" style="display: none;">
 
     <script type="module" src="do.js"></script>
 </body>
 </html>
-
-
