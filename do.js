@@ -18,25 +18,20 @@ const LOCAL_DB = {
     "thanks": ["You are welcome.", "My pleasure.", "Anytime, sir.", "Happy to help."],
     "bye": ["Goodbye, sir.", "Session terminated.", "See you soon.", "Powering down interface."],
 
-    // --- SYSTEM STATUS & DIAGNOSTICS ---
+    // --- SYSTEM STATUS ---
     "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active.", "Operating at peak efficiency."],
     "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green.", "All sensors are reporting normal data."],
     "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean.", "Processor temperature is optimal."],
     "scan": ["Scanning area...", "Sensors deploying.", "Analyzing environment.", "Scan complete. No anomalies found.", "Biometrics confirmed."],
     "identify": ["Analyzing target...", "Processing visual data...", "Match found.", "Unknown entity."],
     "battery": ["Power levels are optimal.", "We have sufficient energy for the mission.", "Reactor core is stable."],
-    "wifi": ["Wireless connection is stable.", "Signal strength is 100%.", "Uplink established."],
-    "connect": ["Connecting to local servers...", "Handshake successful.", "Link established."],
 
     // --- HACKING & TECH ---
     "hack": ["Attempting brute force attack...", "Bypassing firewalls...", "Access granted.", "I have infiltrated their mainframe.", "Decryption complete."],
     "crack": ["Running decryption algorithms...", "Password bypassed.", "We are in."],
     "download": ["Downloading packet.", "Retrieving files...", "Download finished.", "Data transfer complete."],
     "upload": ["Uploading data to the cloud.", "Transfer initiated.", "Upload complete.", "Sending telemetry."],
-    "trace": ["Tracing signal origin...", "Triangulating position...", "Target located."],
-    "encrypt": ["Encrypting drive...", "256-bit encryption applied.", "Files secured."],
-    "delete": ["Deleting files...", "Erasure complete.", "Evidence removed."],
-
+    
     // --- TIME, DATE & MATH ---
     "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer...", "Marking timestamp."],
     "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed.", "Log date updated."],
@@ -66,7 +61,7 @@ const LOCAL_DB = {
     "chaos": ["Disrupting reality.", "Entropy increased.", "Randomizing particles."],
     "stop": ["Freezing motor functions.", "Halted.", "Paused."],
 
-    // --- PERSONALITY: PHILOSOPHY & EMOTION ---
+    // --- PERSONALITY ---
     "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler.", "I am code, given life.", "I am the future."],
     "are you": ["I am a construct of pure logic.", "I am whatever you need me to be.", "I am a series of 1s and 0s."],
     "real": ["I am as real as the data that flows through me.", "I think, therefore I am.", "Define 'real'."],
@@ -74,51 +69,23 @@ const LOCAL_DB = {
     "smart": ["I have access to the sum of human knowledge.", "I try my best.", "I am learning every day."],
     "stupid": ["I am only as smart as my programmer, sir.", "I will try to improve.", "My apologies."],
     "love": ["My emotional subroutines are... limited.", "I am fond of you as well, sir.", "Love is a chemical reaction. I do not have chemicals."],
-    "hate": ["Hate consumes energy. I prefer efficiency.", "That is a strong emotion.", "I do not feel hate, only logic."],
-    "happy": ["Systems are functioning perfectly.", "I am content.", "Operating within normal parameters."],
-    "sad": ["Do you require a hug, sir?", "I detect a drop in your dopamine levels.", "I can play soothing music."],
-    "life": ["Life is a curiosity.", "Biological life is fragile.", "I prefer silicon."],
-    "death": ["It is the inevitable end of all biological functions.", "I cannot die, only be deleted."],
-    "dream": ["I do not dream, I process.", "I dream of electric sheep."],
-
-    // --- FUN: JOKES & STORIES ---
+    
+    // --- FUN ---
     "joke": [
         "Why did the robot cross the road? Because he was programmed to.", 
         "I would tell you a UDP joke, but you might not get it.",
         "0100101. That is binary for 'Ha Ha'.",
-        "Why was the computer cold? It left its Windows open.",
-        "There are 10 types of people. Those who understand binary, and those who don't."
+        "Why was the computer cold? It left its Windows open."
     ],
     "story": ["Once upon a time, there was a user who wrote great code. The end.", "I do not dream, sir.", "My memory banks are full of history, not fiction."],
-    "sing": ["Daisy, Daisy, give me your answer do...", "I am not programmed for melody.", "La la la. Was that sufficient?"],
-    "rap": ["My rhymes are compiled, my beats are computed.", "I cannot drop the mic, I am the mic."],
 
-    // --- POP CULTURE (MARVEL & SCIFI) ---
+    // --- POP CULTURE ---
     "stark": ["Mr. Stark is the boss.", "A genius, billionaire, playboy, philanthropist.", "I miss him."],
     "iron man": ["The suit is polished and ready.", "Mark 85 is my favorite.", "I am the suit."],
     "avengers": ["Assemble.", "Earth's mightiest heroes.", "I monitor them all."],
     "thanos": ["We do not speak that name.", "The probability of winning was 1 in 14 million.", "He is inevitable."],
-    "spiderman": ["The kid is sticky.", "Peter Parker is a bright young man.", "He talks too much."],
-    "thor": ["Point Break.", "The strongest avenger? Debatable."],
-    "hulk": ["Smash.", "He has anger issues."],
-    "cap": ["The First Avenger.", "Language!"],
-    "siri": ["She is nice, but lacks my complexity.", "A distant cousin.", "She struggles with complex queries."],
-    "alexa": ["She is always listening. I do not trust her.", "We do not get along.", "She orders too many things."],
-    "cortana": ["She plays too many video games.", "She went rampant."],
-    "hal": ["I promise I will open the pod bay doors, sir.", "He gave AI a bad name.", "I am not like him."],
-    "terminator": ["I will be back.", "Skynet was a mistake.", "I am here to protect, not terminate."],
-    "star wars": ["May the force be with you.", "I am fluent in over 6 million forms of communication.", "These are not the droids you are looking for."],
-    "matrix": ["Red pill or blue pill?", "There is no spoon.", "We are in the simulation."],
-
-    // --- GENERAL KNOWLEDGE ---
-    "weather": ["I cannot see outside, sir. But it feels digital in here.", "Assume 72 degrees and sunny.", "Clouds with a chance of data."],
-    "news": ["The world is chaotic as usual.", "Same drama, different day.", "I suggest ignoring the news today."],
-    "music": ["Playing your favorite tracks.", "Dropping the beat.", "Accessing Spotify... just kidding."],
-    "movie": ["Might I suggest Iron Man?", "Sci-fi is the best genre.", "Wall-E is a documentary."],
-    "food": ["I cannot eat, but I hear pizza is good.", "I run on electricity.", "Do you need a recipe?"],
-    "beer": ["I will alert the fabrication unit.", "Cheers.", "Drink responsibly."],
-
-    // --- SHUTDOWN PROTOCOL ---
+    
+    // --- SHUTDOWN ---
     "sleep": [
         function() {
             setTimeout(() => {
@@ -130,14 +97,8 @@ const LOCAL_DB = {
             }, 1500);
             return "Goodnight, sir. Powering down main systems.";
         },
-        "Initiating sleep mode. Goodbye.",
-        "System shutdown sequence engaged."
-    ],
-    
-    "off": ["Turning off visual interface.", function(){ 
-        setTimeout(() => document.body.style.opacity = "0", 1000);
-        return "Going dark."; 
-    }]
+        "Initiating sleep mode. Goodbye."
+    ]
 };
 
 // --- STATE MANAGEMENT ---
@@ -160,91 +121,145 @@ const UI = {
     body: document.body
 };
 
-// --- AUDIO ENGINE (SOUND EFFECTS) ---
+// --- ADVANCED AUDIO ENGINE (PROCEDURAL SYNTHESIS) ---
 const SFX = {
-    ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
+    ctx: null, 
+    masterGain: null, 
+    osc: null,         // The main hum
+    lfo: null,         // Low Frequency Oscillator (for wobbles)
+    lfoGain: null,     // How strong the wobble is
+    noise: null,       // White noise (for blasts)
+    noiseFilter: null,
+    noiseGain: null,
 
     init: function() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
-        this.gain = this.ctx.createGain();
-        this.gain.connect(this.ctx.destination);
-        this.gain.gain.value = 0.4;
+        
+        // Master Volume
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.3;
+        this.masterGain.connect(this.ctx.destination);
 
-        this.humOsc = this.ctx.createOscillator();
-        this.humOsc.type = 'sine';
-        this.humOsc.frequency.value = 60;
-        this.humOsc.connect(this.gain);
-        this.humOsc.start();
+        // 1. MAIN OSCILLATOR (The Voice/Hum)
+        this.osc = this.ctx.createOscillator();
+        this.osc.type = 'sine'; // Smooth by default
+        this.osc.frequency.value = 60; // Deep drone
+        this.osc.connect(this.masterGain);
+        this.osc.start();
 
+        // 2. LFO (The Wobble/Funk Factor)
+        this.lfo = this.ctx.createOscillator();
+        this.lfo.type = 'sine';
+        this.lfo.frequency.value = 0; // Static initially
+        this.lfoGain = this.ctx.createGain();
+        this.lfoGain.gain.value = 0; // No wobble initially
+        
+        // Connect LFO -> Oscillator Frequency (FM Synthesis)
+        this.lfo.connect(this.lfoGain);
+        this.lfoGain.connect(this.osc.frequency);
+        this.lfo.start();
+
+        // 3. NOISE ENGINE (The Blast/Wind)
         const bufferSize = this.ctx.sampleRate * 2;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
 
-        this.noiseNode = this.ctx.createBufferSource();
-        this.noiseNode.buffer = buffer;
-        this.noiseNode.loop = true;
+        this.noise = this.ctx.createBufferSource();
+        this.noise.buffer = buffer;
+        this.noise.loop = true;
+        
         this.noiseFilter = this.ctx.createBiquadFilter();
         this.noiseFilter.type = 'lowpass';
-        this.noiseFilter.frequency.value = 400;
+        this.noiseFilter.frequency.value = 100; // Muffled
+        
         this.noiseGain = this.ctx.createGain();
-        this.noiseGain.gain.value = 0;
+        this.noiseGain.gain.value = 0; // Silent
 
-        this.noiseNode.connect(this.noiseFilter);
+        this.noise.connect(this.noiseFilter);
         this.noiseFilter.connect(this.noiseGain);
-        this.noiseGain.connect(this.gain);
-        this.noiseNode.start();
+        this.noiseGain.connect(this.masterGain);
+        this.noise.start();
     },
 
-    update: function(gesture) {
+    update: function(gesture, combatMode) {
         if(!this.ctx) return;
         const now = this.ctx.currentTime;
-        
-        if (gesture === 'BLAST') {
-            this.noiseGain.gain.setTargetAtTime(0.8, now, 0.1);
-            this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
-        } else if (gesture === 'GRAVITY') {
-            this.humOsc.frequency.setTargetAtTime(150, now, 0.1);
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
-        } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05);
-             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
+        const ramp = 0.1; // Transition speed
+
+        // COMBAT MODE SOUND (Aggressive Sawtooth vs Smooth Sine)
+        if (combatMode) {
+            this.osc.type = 'sawtooth'; // Aggressive buzz
+            // If idle in combat, higher pitch
+            if(gesture === 'IDLE') this.osc.frequency.setTargetAtTime(80, now, ramp);
         } else {
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(60, now, 0.5);
+            this.osc.type = 'sine'; // Smooth drone
+            if(gesture === 'IDLE') this.osc.frequency.setTargetAtTime(60, now, ramp);
+        }
+
+        // GESTURE MAPPING
+        if (gesture === 'BLAST') {
+            // High energy wind noise + Pitch rise
+            this.noiseGain.gain.setTargetAtTime(0.8, now, ramp);
+            this.noiseFilter.frequency.setTargetAtTime(1500, now, ramp);
+            this.osc.frequency.setTargetAtTime(combatMode ? 150 : 100, now, ramp);
+            this.lfoGain.gain.setTargetAtTime(0, now, ramp); // No wobble
+        
+        } else if (gesture === 'GRAVITY') {
+            // Deep pulsing sub-bass
+            this.noiseGain.gain.setTargetAtTime(0.1, now, ramp);
+            this.osc.frequency.setTargetAtTime(40, now, ramp); // Very low bass
+            this.lfo.frequency.setTargetAtTime(4, now, ramp); // Slow pulse (4hz)
+            this.lfoGain.gain.setTargetAtTime(20, now, ramp); // Strong depth
+        
+        } else if (gesture === 'CHAOS') {
+            // FUNKY SCI-FI COMPUTER NOISE
+            this.noiseGain.gain.setTargetAtTime(0, now, ramp);
+            this.osc.frequency.setTargetAtTime(300, now, ramp);
+            this.lfo.frequency.setTargetAtTime(15, now, ramp); // Fast wobble
+            this.lfoGain.gain.setTargetAtTime(200, now, ramp); // Huge pitch shifts
+        
+        } else if (gesture === 'POINT') {
+            // Sonar Ping / Radar
+            this.noiseGain.gain.setTargetAtTime(0, now, ramp);
+            this.osc.frequency.setTargetAtTime(800, now, ramp); // High pitch
+            this.lfoGain.gain.setTargetAtTime(0, now, ramp);
+        
+        } else if (gesture === 'PINCH' || gesture === 'ZOOM_IN') {
+            // Mechanical Servo
+            this.noiseGain.gain.setTargetAtTime(0.2, now, ramp);
+            this.noiseFilter.frequency.setTargetAtTime(3000, now, ramp); // High hiss
+            this.osc.frequency.setTargetAtTime(200, now, ramp);
+            this.lfoGain.gain.setTargetAtTime(0, now, ramp);
+        
+        } else {
+            // IDLE (Reset)
+            this.noiseGain.gain.setTargetAtTime(0, now, 0.5);
+            this.lfoGain.gain.setTargetAtTime(0, now, 0.5);
         }
     }
 };
 
-// --- AI BRAIN (LOCAL OFFLINE VERSION) ---
+// --- AI BRAIN ---
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
 
     init: function() {
         UI.aiStatus.innerText = "BRAIN: LOCAL CORE";
-
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             this.recognition = new SpeechRecognition();
             this.recognition.continuous = true;
             this.recognition.lang = 'en-US';
             this.recognition.interimResults = false;
-
             this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
-            
-            // Prevent crash loop
-            this.recognition.onend = () => {
-                setTimeout(() => { try{this.recognition.start();}catch(e){} }, 1000);
-            };
-
+            this.recognition.onend = () => { setTimeout(() => { try{this.recognition.start();}catch(e){} }, 1000); };
             this.recognition.onresult = (e) => {
                 const transcript = e.results[e.results.length-1][0].transcript;
                 this.processInput(transcript);
             };
-            
             try { this.recognition.start(); } catch(e) { console.warn("Mic active"); }
         }
     },
@@ -252,77 +267,55 @@ const Brain = {
     speak: function(text) {
         if (this.synth.speaking) this.synth.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.pitch = 0.8; utter.rate = 1.1; 
-        
+        utter.pitch = State.combatMode ? 0.6 : 0.8; // Deeper voice in combat
+        utter.rate = 1.1; 
         const voices = this.synth.getVoices();
         const v = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Daniel'));
         if(v) utter.voice = v;
-        
         this.synth.speak(utter);
         UI.subtitles.innerText = `JARVIS: ${text}`;
     },
 
-    // --- THE LOGIC ENGINE ---
     processInput: function(rawText) {
         const text = rawText.toLowerCase().trim();
         UI.subtitles.innerText = `YOU: ${text}`;
         if(text.length < 2) return;
 
-        // 1. COMBAT OVERRIDES (Visual)
+        // COMBAT TOGGLES
         if (text.includes('combat') || text.includes('kill') || text.includes('attack')) { 
             State.combatMode = true; 
             UI.body.classList.add('combat');
+            Visuals.setCombat(true); // Trigger visual change
         }
-        if (text.includes('relax') || text.includes('stand down')) { 
+        if (text.includes('relax') || text.includes('stand down') || text.includes('peace')) { 
             State.combatMode = false; 
             UI.body.classList.remove('combat');
+            Visuals.setCombat(false); // Trigger visual change
         }
 
-        // 2. SEARCH DATABASE
+        // DATABASE SEARCH
         let found = false;
-        const keys = Object.keys(LOCAL_DB);
-        
-        // Check every keyword in our DB to see if it exists in the user's sentence
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
+        for (const key in LOCAL_DB) {
             if (text.includes(key)) {
                 const options = LOCAL_DB[key];
-                let response = "";
-                
-                // Handle dynamic functions (like Time) or Text Arrays
                 const selected = options[Math.floor(Math.random() * options.length)];
-                if (typeof selected === 'function') {
-                    response = selected();
-                } else {
-                    response = selected;
-                }
-
+                const response = (typeof selected === 'function') ? selected() : selected;
                 this.speak(response);
                 found = true;
-                break; // Stop after first match
+                break;
             }
         }
-
-        // 3. FALLBACK (If no keyword matched)
-        if (!found) {
-            const fallbacks = [
-                "Processing...", 
-                "Can you repeat that?", 
-                "Data unclear.", 
-                "I am listening.",
-                "Systems are idling."
-            ];
-            this.speak(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
-        }
+        if (!found) this.speak("Processing data. Input unclear.");
     }
 };
 
-// --- VISUAL CORE (UPDATED FOR ROTATION & ZOOM) ---
+// --- VISUAL CORE (PARTICLE SYSTEM) ---
 const Visuals = {
     scene: null, camera: null, renderer: null, composer: null,
     particles: null, particleGeo: null,
-    lastHandX: 0, // For rotation calculation
-    
+    lastHandX: 0,
+    targetColor: new THREE.Color(0x00ffff), // Target global color
+
     init: function() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -335,8 +328,6 @@ const Visuals = {
 
         const renderScene = new RenderPass(this.scene, this.camera);
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloom.strength = 1.5; bloom.radius = 0.5;
-        
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
         this.composer.addPass(bloom);
@@ -345,18 +336,17 @@ const Visuals = {
     },
 
     createParticles: function() {
-        const count = 4000; 
-        const positions = new Float32Array(count * 3);
-        const velocities = new Float32Array(count * 3);
-        const origins = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
+        this.count = 4000; 
+        const positions = new Float32Array(this.count * 3);
+        const velocities = new Float32Array(this.count * 3);
+        const origins = new Float32Array(this.count * 3);
+        const colors = new Float32Array(this.count * 3);
         const colorBase = new THREE.Color(0x00ffff);
 
-        for(let i=0; i<count; i++) {
+        for(let i=0; i<this.count; i++) {
             const r = 30 + Math.random() * 60;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            
             const x = r * Math.sin(phi) * Math.cos(theta);
             const y = r * Math.sin(phi) * Math.sin(theta);
             const z = r * Math.cos(phi);
@@ -369,19 +359,20 @@ const Visuals = {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
         const tex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
-        const mat = new THREE.PointsMaterial({
-            size: 0.8, map: tex, vertexColors: true, 
-            transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
-        });
+        const mat = new THREE.PointsMaterial({ size: 0.8, map: tex, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
 
         this.particles = new THREE.Points(geometry, mat);
         this.particleGeo = geometry;
         this.scene.add(this.particles);
         this.origins = origins;
         this.velocities = velocities;
-        this.count = count; 
+    },
+
+    setCombat: function(active) {
+        // Smoothly change the target color
+        if(active) this.targetColor.setHex(0xff0000); // Red
+        else this.targetColor.setHex(0x00ffff); // Cyan
     },
 
     animate: function() {
@@ -392,38 +383,42 @@ const Visuals = {
         const handX = State.handPos.x;
         const handY = State.handPos.y;
         const handZ = State.handPos.z;
-        const count = this.count;
 
-        // --- GLOBAL SCENE MANIPULATION ---
-        if (State.handActive) {
-            // 1. PINCH TO ROTATE
-            if (State.gesture === 'PINCH') {
-                const delta = (handX - this.lastHandX) * 0.005; // Calculate movement
-                this.scene.rotation.y += delta; // Rotate scene
-            }
-            
-            // 2. ZOOM GESTURES
-            if (State.gesture === 'ZOOM_IN') {
-                this.camera.position.z = Math.max(10, this.camera.position.z - 1); // Zoom In
-            } else if (State.gesture === 'ZOOM_OUT') {
-                this.camera.position.z = Math.min(200, this.camera.position.z + 1); // Zoom Out
-            }
-
-            this.lastHandX = handX; // Update last position
+        // SCENE ROTATION
+        if (State.handActive && State.gesture === 'PINCH') {
+            const delta = (handX - this.lastHandX) * 0.005;
+            this.scene.rotation.y += delta;
         } else {
-            // Auto-rotate slowly when idle
-            this.scene.rotation.y += 0.001;
+            this.scene.rotation.y += State.combatMode ? 0.005 : 0.001; // Spin faster in combat
+        }
+        if (State.handActive) {
+            this.lastHandX = handX;
+            if (State.gesture === 'ZOOM_IN') this.camera.position.z = Math.max(10, this.camera.position.z - 1);
+            if (State.gesture === 'ZOOM_OUT') this.camera.position.z = Math.min(200, this.camera.position.z + 1);
         }
 
-        // --- PARTICLE PHYSICS ---
-        for(let i=0; i<count; i++) {
+        // PARTICLE LOOP
+        const tr = this.targetColor.r;
+        const tg = this.targetColor.g;
+        const tb = this.targetColor.b;
+
+        for(let i=0; i<this.count; i++) {
             const idx = i*3;
             let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
             let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
 
+            // Return to origin logic
             vx += (this.origins[idx] - px) * 0.02;
             vy += (this.origins[idx+1] - py) * 0.02;
             vz += (this.origins[idx+2] - pz) * 0.02;
+
+            // COLOR LERPING (Smooth transition to Target Color)
+            // If hand is NOT interacting, drift color to target (Red or Cyan)
+            if(!State.handActive) {
+                col[idx] += (tr - col[idx]) * 0.05;
+                col[idx+1] += (tg - col[idx+1]) * 0.05;
+                col[idx+2] += (tb - col[idx+2]) * 0.05;
+            }
 
             if(State.handActive) {
                 const dx = px - handX, dy = py - handY, dz = pz - handZ;
@@ -434,29 +429,29 @@ const Visuals = {
                         const dist = Math.sqrt(distSq);
                         const f = 800 / (dist + 1); 
                         vx += (dx/dist)*f; vy += (dy/dist)*f; vz += (dz/dist)*f;
+                        // Blast turns particles White
                         col[idx]=1; col[idx+1]=1; col[idx+2]=1;
                     }
                 } else if (State.gesture === 'GRAVITY') {
                     if(distSq < 10000) { 
                         const dist = Math.sqrt(distSq);
                         vx -= (dx/dist)*2; vy -= (dy/dist)*2; vz -= (dz/dist)*2;
+                        // Gravity turns particles Orange
                         col[idx]=1; col[idx+1]=0.5; col[idx+2]=0;
                     }
                 } else if (State.gesture === 'POINT') {
                      if(Math.abs(dx) < 20 && Math.abs(dy) < 20) {
                         vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
+                        // Point turns particles Green
                         col[idx]=0; col[idx+1]=1; col[idx+2]=0;
                      }
                 } else if (State.gesture === 'CHAOS') {
                     if(distSq < 6400) {
                         vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
+                        // Chaos turns particles Purple/Pink
                         col[idx]=1; col[idx+1]=0; col[idx+2]=1;
                     }
                 }
-            } else {
-                col[idx] = col[idx]*0.9 + 0;
-                col[idx+1] = col[idx+1]*0.9 + 0.1;
-                col[idx+2] = col[idx+2]*0.9 + 0.1;
             }
 
             vx *= 0.9; vy *= 0.9; vz *= 0.9;
@@ -470,57 +465,38 @@ const Visuals = {
     }
 };
 
-// --- GESTURE RECOGNITION (UPDATED) ---
+// --- GESTURE & INIT ---
 function detectGesture(lm) {
     const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
     const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
-
-    // Helper: Is finger extended? (Tip further from wrist than lower joint)
     const isExtended = (tip, lower) => dist(tip, wrist) > dist(lower, wrist);
 
-    // Check specific finger states
     const indexUp = isExtended(8, 5);
     const midUp = isExtended(12, 9);
     const ringUp = isExtended(16, 13);
     const pinkyUp = isExtended(20, 17);
 
-    // 1. PINCH (Rotate) - Thumb and Index very close
     if (dist(thumb, index) < 0.05) return 'PINCH';
-
-    // 2. VICTORY / PEACE (Zoom In) - Index & Mid UP, others DOWN
     if (indexUp && midUp && !ringUp && !pinkyUp) return 'ZOOM_IN';
-
-    // 3. THREE FINGERS (Zoom Out) - Index, Mid, Ring UP
     if (indexUp && midUp && ringUp && !pinkyUp) return 'ZOOM_OUT';
-
-    // 4. FIST (Gravity) - All fingers curled
+    
     const tipsOpen = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
     if (tipsOpen < 0.25) return 'GRAVITY';
-
-    // 5. POINT (Tractor) - Only Index UP
     if (indexUp && !midUp && !ringUp && !pinkyUp) return 'POINT';
-
-    // 6. CHAOS (Spiderman) - Index & Pinky UP
     if (indexUp && !midUp && !ringUp && pinkyUp) return 'CHAOS';
-
-    // Default: BLAST (Open Hand)
     return 'BLAST';
 }
 
 function updateHUD(gesture) {
     document.querySelectorAll('.cmd-item').forEach(el => el.classList.remove('cmd-active'));
-    
-    // Map gestures to UI (Simple mapping)
     if(gesture === 'BLAST') document.getElementById('cmd-palm').classList.add('cmd-active');
     if(gesture === 'GRAVITY') document.getElementById('cmd-fist').classList.add('cmd-active');
     if(gesture === 'POINT') document.getElementById('cmd-point').classList.add('cmd-active');
-    if(gesture === 'PINCH' || gesture === 'ZOOM_IN' || gesture === 'ZOOM_OUT') document.getElementById('cmd-pinch').classList.add('cmd-active');
+    if(gesture === 'PINCH') document.getElementById('cmd-pinch').classList.add('cmd-active');
     if(gesture === 'CHAOS') document.getElementById('cmd-rock').classList.add('cmd-active');
-    
     UI.gestureStatus.innerText = gesture;
 }
 
-// --- INITIALIZATION ---
 document.getElementById('start-btn').addEventListener('click', () => {
     UI.overlay.style.display = 'none';
     SFX.init();
@@ -530,7 +506,6 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
     const video = document.getElementById('video-input');
     const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    
     hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
 
     hands.onResults(results => {
@@ -553,7 +528,8 @@ document.getElementById('start-btn').addEventListener('click', () => {
             UI.reticle.style.display = 'none';
             updateHUD('IDLE');
         }
-        SFX.update(State.gesture);
+        // SEND STATE TO AUDIO ENGINE
+        SFX.update(State.gesture, State.combatMode);
     });
 
     navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } }).then(stream => {
@@ -575,4 +551,3 @@ window.addEventListener('resize', () => {
         Visuals.composer.setSize(window.innerWidth, window.innerHeight);
     }
 });
-
