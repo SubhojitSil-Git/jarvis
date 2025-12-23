@@ -9,7 +9,7 @@ const State = {
     handPos: { x: 0.5, y: 0.5 },
     particles: { count: 12000 },
     audio: { analyser: null, dataArray: null, active: false },
-    // NEW: Persistent Controls
+    // PERSISTENT CONTROLS
     manualZoom: 180,
     activeHue: 0.5,
     rainbowMode: false
@@ -20,7 +20,7 @@ const SoundEngine = {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
         audio.volume = 0.4;
         audio.play().catch(e => console.log("Audio play blocked."));
-        const msg = new SpeechSynthesisUtterance("Synapse Neural Link Established. Hand tracking system powering on.");
+        const msg = new SpeechSynthesisUtterance("Neural Link Established. Performance mode active.");
         msg.rate = 1.0; msg.pitch = 0.8;
         window.speechSynthesis.speak(msg);
     }
@@ -102,8 +102,11 @@ const Engine3D = {
             bass = State.audio.dataArray[0] / 255;
         }
 
-        // --- GLOBAL COLOR CALCULATION ---
         let targetCol = new THREE.Color().setHSL(State.activeHue, 1.0, 0.5);
+
+        // OPTIMIZED SPEEDS
+        const physicsSpeed = 0.15; 
+        const colorSpeed = 0.2; 
 
         for (let i = 0; i < State.particles.count; i++) {
             const idx = i * 3;
@@ -119,36 +122,32 @@ const Engine3D = {
             else if (State.gesture === 'FIST_CLOSED') { tx *= 0.1; ty *= 0.1; tz *= 0.1; } 
             else if (State.gesture === 'PALM_OPEN') {
                 tx = this.originData[idx]; ty = this.originData[idx+1]; tz = this.originData[idx+2];
-                this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -(State.handPos.x - 0.5) * 4, 0.05);
-                this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, (State.handPos.y - 0.5) * 4, 0.05);
+                this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -(State.handPos.x - 0.5) * 5, 0.15);
+                this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, (State.handPos.y - 0.5) * 5, 0.15);
             }
 
-            const lerpSpeed = 0.07;
-            pAttr[idx] += (tx - pAttr[idx]) * lerpSpeed;
-            pAttr[idx+1] += (ty - pAttr[idx+1]) * lerpSpeed;
-            pAttr[idx+2] += (tz - pAttr[idx+2]) * lerpSpeed;
+            pAttr[idx] += (tx - pAttr[idx]) * physicsSpeed;
+            pAttr[idx+1] += (ty - pAttr[idx+1]) * physicsSpeed;
+            pAttr[idx+2] += (tz - pAttr[idx+2]) * physicsSpeed;
 
-            // --- COLOR MODE LOGIC ---
             if (State.rainbowMode) {
-                const pCol = new THREE.Color().setHSL((i / State.particles.count) + (Date.now() * 0.0002), 0.8, 0.5);
-                cAttr[idx] += (pCol.r - cAttr[idx]) * 0.1;
-                cAttr[idx+1] += (pCol.g - cAttr[idx+1]) * 0.1;
-                cAttr[idx+2] += (pCol.b - cAttr[idx+2]) * 0.1;
+                const pCol = new THREE.Color().setHSL((i / State.particles.count) + (Date.now() * 0.0005), 0.9, 0.5);
+                cAttr[idx] += (pCol.r - cAttr[idx]) * colorSpeed;
+                cAttr[idx+1] += (pCol.g - cAttr[idx+1]) * colorSpeed;
+                cAttr[idx+2] += (pCol.b - cAttr[idx+2]) * colorSpeed;
             } else {
-                cAttr[idx] += (targetCol.r - cAttr[idx]) * 0.1;
-                cAttr[idx+1] += (targetCol.g - cAttr[idx+1]) * 0.1;
-                cAttr[idx+2] += (targetCol.b - cAttr[idx+2]) * 0.1;
+                cAttr[idx] += (targetCol.r - cAttr[idx]) * colorSpeed;
+                cAttr[idx+1] += (targetCol.g - cAttr[idx+1]) * colorSpeed;
+                cAttr[idx+2] += (targetCol.b - cAttr[idx+2]) * colorSpeed;
             }
         }
 
         this.points.geometry.attributes.position.needsUpdate = true;
         this.points.geometry.attributes.color.needsUpdate = true;
         
-        if (State.gesture !== 'PALM_OPEN') {
-            this.points.rotation.y += 0.005 + (bass * 0.05);
-        }
+        if (State.gesture !== 'PALM_OPEN') this.points.rotation.y += 0.006 + (bass * 0.06);
         
-        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, State.manualZoom, 0.05);
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, State.manualZoom, 0.15);
         this.composer.render();
     }
 };
@@ -157,17 +156,15 @@ const NeuralEngine = {
     dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); },
     detectHand(lm) {
         const d = (i, j) => this.dist(lm[i], lm[j]);
-        const iE = d(8, 0) > d(6, 0); const mE = d(12, 0) > d(10, 0);
+        const iE = d(8, 0) > d(6, 0); const mE = d(12, 0) > d(10, 0); 
         const rE = d(16, 0) > d(14, 0); const pE = d(20, 0) > d(18, 0);
 
-        // OK Gesture -> Rainbow Mode Toggle
-        if (d(4, 8) < 0.04) { State.rainbowMode = true; return "RAINBOW_ACTIVE"; }
+        if (d(4, 8) < 0.04) { State.rainbowMode = true; return "RAINBOW_MODE"; }
 
-        // 3-Finger Gesture -> Manual Color Cycle
-        if (iE && mE && rE && !pE) {
+        if (iE && mE && rE && !pE) { 
             State.rainbowMode = false;
-            State.activeHue = (State.activeHue + 0.005) % 1.0;
-            return "COLOR_CYCLING";
+            State.activeHue = (State.activeHue + 0.012) % 1.0; 
+            return "COLOR_CYCLE"; 
         }
 
         if (iE && mE && rE && pE) return "PALM_OPEN"; 
@@ -179,10 +176,10 @@ const NeuralEngine = {
         const d = (a, b) => this.dist(a, b);
         const centerDist = d(h1[9], h2[9]);
         
-        // --- PERSISTENT ZOOM CONTROL ---
-        if (centerDist > 0.6) State.manualZoom -= 3; // Spread hands = Zoom In
-        if (centerDist < 0.3) State.manualZoom += 3; // Pinch hands = Zoom Out
-        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 60, 600);
+        if (centerDist > 0.55) State.manualZoom -= (centerDist * 25); 
+        if (centerDist < 0.35) State.manualZoom += ((0.5 - centerDist) * 30);
+
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 35, 800);
 
         if (d(h1[8], h2[8]) < 0.08 && d(h1[4], h2[4]) < 0.08) return "HEART_SYNC";
         return "DUAL_NAV";
