@@ -4,19 +4,19 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ================================================================
-   LOCAL INTELLIGENCE DATABASE (GOD MODE)
+   LOCAL INTELLIGENCE DATABASE
    ================================================================
 */
 const LOCAL_DB = {
     // --- CORE INTERACTIONS ---
-    "hello": ["Greetings, sir.", "Online.", "System active.", "I am listening."],
+    "hello": ["Greetings, sir.", "Online.", "System active."],
     "jarvis": ["Yes, sir?", "Awaiting instructions.", "Standing by."],
     "bye": ["Goodbye, sir.", "Powering down."],
 
     // --- SYSTEM STATUS ---
-    "status": ["All systems nominal.", "Battery 100%.", "Network secure.", "Visuals active."],
+    "status": ["All systems nominal.", "Battery 100%.", "Network secure."],
     "system": ["Logic efficiency 98%.", "Memory clean."],
-    
+
     // --- COMBAT & DEFENSE ---
     "combat": [() => toggleCombat(true), "Engaging combat mode.", "Weapons hot."],
     "kill": [() => toggleCombat(true), "Termination engaged.", "Acquiring targets."],
@@ -32,11 +32,7 @@ const LOCAL_DB = {
     
     // --- PDF / STUDY ---
     "upload": [() => KnowledgeBase.triggerUpload(), "Opening interface."],
-    "read": [() => KnowledgeBase.triggerUpload(), "Select document."],
-
-    // --- TIME & MATH ---
-    "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer."],
-    "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed."],
+    "read": [() => KnowledgeBase.triggerUpload(), "Select document."]
 };
 
 // --- GLOBAL STATE ---
@@ -59,14 +55,15 @@ const UI = {
     body: document.body
 };
 
-// --- HELPER: COMBAT TOGGLE ---
 function toggleCombat(isActive) {
     State.combatMode = isActive;
     if (isActive) {
+        SFX.trigger('combat'); 
         UI.body.classList.add('combat');
         UI.subtitles.style.color = "#ff0000";
         UI.reticle.style.borderColor = "#ff0000";
     } else {
+        SFX.trigger('relax');
         UI.body.classList.remove('combat');
         UI.subtitles.style.color = "#00ffff";
         UI.reticle.style.borderColor = "#00ffff";
@@ -74,74 +71,64 @@ function toggleCombat(isActive) {
     return isActive ? "Combat Mode." : "Systems Normalized.";
 }
 
-/* ================================================================
-   AUDIO ENGINE (PROCEDURAL SOUNDS)
-   ================================================================
-*/
+// --- AUDIO ENGINE ---
 const SFX = {
-    ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
+    ctx: null, gain: null,
 
     init: function() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
         this.gain = this.ctx.createGain();
         this.gain.connect(this.ctx.destination);
-        this.gain.gain.value = 0.4;
-
-        // 1. Idle Drone (Sine Wave)
-        this.humOsc = this.ctx.createOscillator();
-        this.humOsc.type = 'sine';
-        this.humOsc.frequency.value = 60;
-        this.humOsc.connect(this.gain);
-        this.humOsc.start();
-
-        // 2. Thruster Noise (White Noise Buffer)
-        const bufferSize = this.ctx.sampleRate * 2;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-        this.noiseNode = this.ctx.createBufferSource();
-        this.noiseNode.buffer = buffer;
-        this.noiseNode.loop = true;
-        this.noiseFilter = this.ctx.createBiquadFilter();
-        this.noiseFilter.type = 'lowpass';
-        this.noiseFilter.frequency.value = 400;
-        this.noiseGain = this.ctx.createGain();
-        this.noiseGain.gain.value = 0;
-
-        this.noiseNode.connect(this.noiseFilter);
-        this.noiseFilter.connect(this.noiseGain);
-        this.noiseGain.connect(this.gain);
-        this.noiseNode.start();
+        this.gain.gain.value = 0.3;
     },
 
-    update: function(gesture) {
-        if(!this.ctx) return;
+    trigger: function(type) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.connect(g);
+        g.connect(this.ctx.destination);
         const now = this.ctx.currentTime;
-        
-        if (gesture === 'BLAST') {
-            this.noiseGain.gain.setTargetAtTime(0.8, now, 0.1);
-            this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
-        } else if (gesture === 'GRAVITY') {
-            this.humOsc.frequency.setTargetAtTime(150, now, 0.1); // Charge up sound
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
-        } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05); // High pitch laser sound
-             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
-        } else {
-            // Idle state
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(60, now, 0.5);
+
+        if (type === 'combat') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.5);
+            g.gain.setValueAtTime(0.5, now);
+            g.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+            osc.start(now); osc.stop(now + 1.0);
+        } else if (type === 'relax') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 1.5);
+            g.gain.linearRampToValueAtTime(0, now + 1.5);
+            osc.start(now); osc.stop(now + 1.5);
+        } else if (type === 'blast') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            g.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'gravity') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(60, now);
+            g.gain.linearRampToValueAtTime(0, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        }
+    },
+    
+    currentGesture: 'IDLE',
+    update: function(gesture) {
+        if (gesture !== this.currentGesture) {
+            this.currentGesture = gesture;
+            if (gesture === 'BLAST') this.trigger('blast');
+            if (gesture === 'GRAVITY') this.trigger('gravity');
         }
     }
 };
 
-/* ================================================================
-   AI BRAIN
-   ================================================================
-*/
+// --- AI BRAIN ---
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
@@ -166,7 +153,7 @@ const Brain = {
     speak: function(text) {
         if (this.synth.speaking) this.synth.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.pitch = State.combatMode ? 0.6 : 1.0; // Deeper voice in combat
+        utter.pitch = State.combatMode ? 0.6 : 1.0;
         utter.rate = 1.1; 
         const voices = this.synth.getVoices();
         const v = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Daniel'));
@@ -179,7 +166,7 @@ const Brain = {
         const text = rawText.toLowerCase().trim();
         UI.subtitles.innerText = `YOU: ${text}`;
         
-        // Math Calculation Check
+        // Math Check
         if (text.match(/[0-9]/) && (text.includes("calculate") || text.includes("times") || text.includes("plus"))) {
              try {
                 const mathStr = text.replace(/[^0-9\+\-\*\/\.]/g, ''); 
@@ -188,7 +175,6 @@ const Brain = {
         }
 
         let found = false;
-        // Search Database
         for (const key in LOCAL_DB) {
             if (text.includes(key)) {
                 const options = LOCAL_DB[key];
@@ -203,10 +189,7 @@ const Brain = {
     }
 };
 
-/* ================================================================
-   KNOWLEDGE BASE (PDF)
-   ================================================================
-*/
+// --- KNOWLEDGE BASE (PDF) ---
 const KnowledgeBase = {
     data: [], 
     init: function() {
@@ -236,30 +219,23 @@ const KnowledgeBase = {
     }
 };
 
-/* ================================================================
-   VISUAL CORE (THREE.JS)
-   ================================================================
-*/
+// --- VISUAL CORE ---
 const Visuals = {
     scene: null, camera: null, renderer: null, composer: null,
-    particles: null, particleGeo: null, 
-    count: isMobile ? 2000 : 8000, 
-    knowledgeMap: {}, origins: null, velocities: null,
-
+    particles: null, particleGeo: null, count: isMobile ? 1500 : 4000,
+    knowledgeMap: {}, lastHandX: 0,
+    
     init: function() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 80;
+        this.camera.position.z = isMobile ? 100 : 80; // Zoom out slightly on mobile
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: false });
+        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(this.renderer.domElement);
 
         const renderScene = new RenderPass(this.scene, this.camera);
         const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloom.strength = 2.0; bloom.radius = 0.5;
-        
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
         this.composer.addPass(bloom);
@@ -275,10 +251,9 @@ const Visuals = {
         const colorBase = new THREE.Color(0x00ffff);
 
         for(let i=0; i<this.count; i++) {
-            const r = 30 + Math.random() * 60; // Sphere cloud
+            const r = 30 + Math.random() * 60;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            
             const x = r * Math.sin(phi) * Math.cos(theta);
             const y = r * Math.sin(phi) * Math.sin(theta);
             const z = r * Math.cos(phi);
@@ -291,25 +266,19 @@ const Visuals = {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
         const tex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
-        const mat = new THREE.PointsMaterial({
-            size: 0.8, map: tex, vertexColors: true, 
-            transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
-        });
+        const mat = new THREE.PointsMaterial({ size: isMobile ? 1.0 : 0.8, map: tex, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
 
         this.particles = new THREE.Points(geometry, mat);
         this.particleGeo = geometry;
         this.scene.add(this.particles);
-        
-        // Store for physics
         this.origins = origins;
         this.velocities = velocities;
     },
 
     injectKnowledge: function(sentences) {
-        this.knowledgeMap = {}; 
         const colors = this.particleGeo.attributes.color.array;
+        this.knowledgeMap = {}; 
         const max = Math.min(sentences.length, this.count);
         for(let i=0; i<max; i++) {
             const idx = Math.floor(Math.random() * this.count);
@@ -321,113 +290,67 @@ const Visuals = {
 
     animate: function() {
         requestAnimationFrame(this.animate.bind(this));
-        this.updatePhysics();
-        this.composer.render();
-    },
-    
-    updatePhysics: function() {
-        if(!this.particles) return;
-        const positions = this.particles.geometry.attributes.position.array;
-        const colors = this.particles.geometry.attributes.color.array;
-
+        
+        const pos = this.particleGeo.attributes.position.array;
+        const col = this.particleGeo.attributes.color.array;
         const handX = State.handPos.x;
         const handY = State.handPos.y;
-        const handZ = State.handPos.z || 0;
-
-        const targetColor = State.combatMode ? {r:1, g:0, b:0} : {r:0, g:1, b:1};
+        
+        let tr, tg, tb;
+        if (State.combatMode) { tr = 1.0; tg = 0.0; tb = 0.0; this.scene.rotation.y += 0.02; } 
+        else { tr = 0.0; tg = 1.0; tb = 1.0; this.scene.rotation.y += 0.002; }
 
         for(let i=0; i<this.count; i++) {
             const idx = i*3;
-            let px = positions[idx];
-            let py = positions[idx+1];
-            let pz = positions[idx+2];
-            let vx = this.velocities[idx];
-            let vy = this.velocities[idx+1];
-            let vz = this.velocities[idx+2];
-
-            // Return force
-            vx += (this.origins[idx] - px) * 0.015;
-            vy += (this.origins[idx+1] - py) * 0.015;
-            vz += (this.origins[idx+2] - pz) * 0.015;
-
-            // Interaction
-            if(State.handActive) {
-                const dx = px - handX;
-                const dy = py - handY;
-                const dz = pz - handZ;
-                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-
-                if (State.gesture === 'BLAST') {
-                    if(dist < 60) {
-                        const f = 1000 / (dist + 1);
-                        vx += (dx/dist) * f; vy += (dy/dist) * f; vz += (dz/dist) * f;
-                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=1; colors[idx+2]=1; }
-                    }
-                } else if (State.gesture === 'GRAVITY') {
-                    if(dist < 100) {
-                        vx -= (dx/dist) * 2; vy -= (dy/dist) * 2; vz -= (dz/dist) * 2;
-                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=0.5; colors[idx+2]=0; }
-                    }
-                } else if (State.gesture === 'POINT') {
-                    const distBeam = Math.sqrt(dx*dx + dy*dy);
-                    if (distBeam < 15) {
-                        vx += (handX - px)*0.2; vy += (handY - py)*0.2; vz += 5; // Shoot forward
-                        if(!this.knowledgeMap[i]) { colors[idx]=0; colors[idx+1]=1; colors[idx+2]=0; }
-                    }
-                } else if (State.gesture === 'PINCH') {
-                    if (this.knowledgeMap[i] && dist < 30) {
-                        UI.subtitles.innerText = `[DATA]: ${this.knowledgeMap[i]}`;
-                        px += (Math.random()-0.5)*2; 
-                    } else {
-                        vx *= 0.1; vy *= 0.1; vz *= 0.1; // Freeze
-                    }
-                } else if (State.gesture === 'CHAOS') {
-                    if(dist < 80) {
-                        vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
-                        if(!this.knowledgeMap[i]) { colors[idx]=1; colors[idx+1]=0; colors[idx+2]=1; }
-                    }
-                }
-            } else {
-                // Restore color
-                if(!this.knowledgeMap[i]) {
-                    colors[idx] = colors[idx]*0.95 + targetColor.r*0.05;
-                    colors[idx+1] = colors[idx+1]*0.95 + targetColor.g*0.05;
-                    colors[idx+2] = colors[idx+2]*0.95 + targetColor.b*0.05;
-                }
+            // Color Transition (Skip Gold Particles)
+            if(!this.knowledgeMap[i]) {
+                col[idx]   += (tr - col[idx]) * 0.05;
+                col[idx+1] += (tg - col[idx+1]) * 0.05;
+                col[idx+2] += (tb - col[idx+2]) * 0.05;
             }
 
-            // Friction & Apply
+            let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
+            let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
+
+            vx += (this.origins[idx] - px) * 0.02;
+            vy += (this.origins[idx+1] - py) * 0.02;
+            vz += (this.origins[idx+2] - pz) * 0.02;
+
+            if(State.handActive) {
+                const dx = px - handX, dy = py - handY;
+                const distSq = dx*dx + dy*dy;
+
+                if (State.gesture === 'BLAST' && distSq < 3600) {
+                     const f = 800 / (Math.sqrt(distSq) + 1);
+                     vx += (dx)*f*0.01; vy += (dy)*f*0.01;
+                     if(!this.knowledgeMap[i]) { col[idx]=1; col[idx+1]=1; col[idx+2]=1; }
+                } 
+                else if (State.gesture === 'GRAVITY' && distSq < 10000) {
+                     vx -= (dx)*0.01; vy -= (dy)*0.01;
+                }
+                else if (State.gesture === 'PINCH' && this.knowledgeMap[i] && distSq < 900) {
+                     UI.subtitles.innerText = `[DATA]: ${this.knowledgeMap[i]}`;
+                     px += (Math.random()-0.5)*2; 
+                }
+            }
             vx *= 0.9; vy *= 0.9; vz *= 0.9;
-            positions[idx] = px + vx;
-            positions[idx+1] = py + vy;
-            positions[idx+2] = pz + vz;
-            
+            pos[idx] = px + vx; pos[idx+1] = py + vy; pos[idx+2] = pz + vz;
             this.velocities[idx] = vx; this.velocities[idx+1] = vy; this.velocities[idx+2] = vz;
         }
 
-        this.particles.geometry.attributes.position.needsUpdate = true;
-        this.particles.geometry.attributes.color.needsUpdate = true;
+        this.particleGeo.attributes.position.needsUpdate = true;
+        this.particleGeo.attributes.color.needsUpdate = true;
+        this.composer.render();
     }
 };
 
 // --- GESTURE & INIT ---
 function detectGesture(lm) {
     const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
-    const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
-
-    // 1. PINCH
-    if (dist(thumb, index) < 0.05) return 'PINCH';
-
-    // 2. FIST (Gravity) - All fingertips close to wrist
-    const avgTip = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
-    if (avgTip < 0.25) return 'GRAVITY';
-
-    // 3. POINT (Tractor) - Index Up, others Down
-    if (dist(index, wrist) > dist(mid, wrist) && dist(mid, wrist) < 0.3) return 'POINT';
-
-    // 4. CHAOS (Rock) - Index & Pinky Up
-    if (dist(index, wrist) > 0.4 && dist(pinky, wrist) > 0.4 && dist(mid, wrist) < 0.3) return 'CHAOS';
-
+    if (dist(4, 8) < 0.05) return 'PINCH';
+    const tipsOpen = (dist(8,0)+dist(12,0)+dist(16,0)+dist(20,0))/4;
+    if (tipsOpen < 0.25) return 'GRAVITY';
+    if (dist(8,0) > dist(5,0) && dist(12,0) < dist(9,0)) return 'POINT';
     return 'BLAST';
 }
 
@@ -450,7 +373,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
 
     const video = document.getElementById('video-input');
     const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 1, modelComplexity: isMobile ? 0 : 1 }); 
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 0 }); // Lower complexity for mobile
     hands.onResults(results => {
         if (results.multiHandLandmarks.length > 0) {
             State.handActive = true;
