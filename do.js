@@ -4,8 +4,9 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ================================================================
-   DEAD CODE GRAVEYARD — LOCAL_DB replaced by Ollama LLM
-   Kept as a comment so nothing else in the file breaks on parse.
+   LOCAL INTELLIGENCE DATABASE
+   Used when Brain.mode === 'local' (instant keyword responses).
+   Switch to LLM mode in the HUD for full Ollama intelligence.
    ================================================================ */
 const LOCAL_DB = {
     // --- CORE INTERACTIONS ---
@@ -588,18 +589,18 @@ const Visuals = {
         if (State.handActive) {
             // 1. PINCH TO ROTATE
             if (State.gesture === 'PINCH') {
-                const delta = (handX - this.lastHandX) * 0.005; // Calculate movement
-                this.scene.rotation.y += delta; // Rotate scene
-            }
-            
-            // 2. ZOOM GESTURES (delta-time corrected)
-            if (State.gesture === 'ZOOM_IN') {
-                this.camera.position.z = Math.max(10, this.camera.position.z - 1 * delta);
-            } else if (State.gesture === 'ZOOM_OUT') {
-                this.camera.position.z = Math.min(200, this.camera.position.z + 1 * delta);
+                const rotDelta = (handX - this.lastHandX) * 0.005;
+                this.scene.rotation.y += rotDelta;
             }
 
-            this.lastHandX = handX; // Update last position
+            // 2. ZOOM GESTURES (delta-time corrected)
+            if (State.gesture === 'ZOOM_IN') {
+                this.camera.position.z = Math.max(10, this.camera.position.z - delta);
+            } else if (State.gesture === 'ZOOM_OUT') {
+                this.camera.position.z = Math.min(200, this.camera.position.z + delta);
+            }
+
+            this.lastHandX = handX;
         } else {
             // Auto-rotate slowly when idle
             this.scene.rotation.y += 0.001 * delta;
@@ -719,12 +720,19 @@ document.getElementById('start-btn').addEventListener('click', async () => {
     Visuals.animate();
 
     const video = document.getElementById('video-input');
-    const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+    const hands = new window.Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.5
+    });
 
     hands.onResults(results => {
-        if (results.multiHandLandmarks.length > 0) {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             State.handActive = true;
             const lm = results.multiHandLandmarks[0];
             const x = (0.5 - lm[9].x) * 160;
@@ -733,7 +741,7 @@ document.getElementById('start-btn').addEventListener('click', async () => {
 
             UI.reticle.style.display = 'block';
             UI.reticle.style.left = ((1 - lm[9].x) * window.innerWidth) + 'px';
-            UI.reticle.style.top = (lm[9].y * window.innerHeight) + 'px';
+            UI.reticle.style.top  = (lm[9].y * window.innerHeight) + 'px';
 
             State.gesture = detectGesture(lm);
             updateHUD(State.gesture);
@@ -746,14 +754,28 @@ document.getElementById('start-btn').addEventListener('click', async () => {
         SFX.update(State.gesture);
     });
 
-    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } }).then(stream => {
+    // Must initialize MediaPipe before sending frames
+    await hands.initialize();
+
+    navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: 'user' }
+    }).then(async (stream) => {
         video.srcObject = stream;
-        video.play();
-        const process = async () => {
-            if (video.readyState >= 2) await hands.send({image: video});
-            requestAnimationFrame(process);
+        // Await play() — avoids sending frames before video is actually live
+        await video.play().catch(e => console.warn('video.play():', e));
+
+        const processFrame = async () => {
+            // readyState 2 = HAVE_CURRENT_DATA, enough to send
+            if (video.readyState >= 2) {
+                await hands.send({ image: video }).catch(e => console.warn('hands.send():', e));
+            }
+            requestAnimationFrame(processFrame);
         };
-        process();
+        requestAnimationFrame(processFrame);
+    }).catch(err => {
+        console.error('Camera access failed:', err);
+        UI.subtitles.innerText = `JARVIS: Camera unavailable — ${err.name}. Check browser permissions.`;
+        UI.subtitles.style.opacity = '0.9';
     });
 });
 
