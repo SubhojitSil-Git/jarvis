@@ -8,7 +8,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
    ================================================================
 */
 const LOCAL_DB = {
-    // --- CORE INTERACTIONS ---
     "hello": ["Greetings, sir.", "Online and ready.", "At your service.", "Hello.", "Systems operational.", "I am listening."],
     "hi": ["Hello there.", "I am listening.", "Standing by."],
     "hey": ["Yes, sir?", "I am here.", "Awaiting commands."],
@@ -18,7 +17,6 @@ const LOCAL_DB = {
     "thanks": ["You are welcome.", "My pleasure.", "Anytime, sir.", "Happy to help."],
     "bye": ["Goodbye, sir.", "Session terminated.", "See you soon.", "Powering down interface."],
 
-    // --- SYSTEM STATUS & DIAGNOSTICS ---
     "status": ["All systems nominal.", "Battery at 100%. CPU cooling stable.", "Network secure. Visuals active.", "Operating at peak efficiency."],
     "report": ["No threats detected. Atmosphere is clear.", "Diagnostics complete. We are green.", "All sensors are reporting normal data."],
     "system": ["Core logic is functioning at 98% efficiency.", "Memory banks are clean.", "Processor temperature is optimal."],
@@ -28,7 +26,6 @@ const LOCAL_DB = {
     "wifi": ["Wireless connection is stable.", "Signal strength is 100%.", "Uplink established."],
     "connect": ["Connecting to local servers...", "Handshake successful.", "Link established."],
 
-    // --- HACKING & TECH ---
     "hack": ["Attempting brute force attack...", "Bypassing firewalls...", "Access granted.", "I have infiltrated their mainframe.", "Decryption complete."],
     "crack": ["Running decryption algorithms...", "Password bypassed.", "We are in."],
     "download": ["Downloading packet.", "Retrieving files...", "Download finished.", "Data transfer complete."],
@@ -37,14 +34,12 @@ const LOCAL_DB = {
     "encrypt": ["Encrypting drive...", "256-bit encryption applied.", "Files secured."],
     "delete": ["Deleting files...", "Erasure complete.", "Evidence removed."],
 
-    // --- TIME, DATE & MATH ---
     "time": [() => `The time is ${new Date().toLocaleTimeString()}.`, "Checking chronometer...", "Marking timestamp."],
     "date": [() => `Today is ${new Date().toLocaleDateString()}.`, "Calendar accessed.", "Log date updated."],
     "year": [() => `It is the year ${new Date().getFullYear()}.`, "Current timeline set to present day."],
     "calc": ["Calculating...", "Processing numbers...", "The math checks out."],
     "math": ["I love calculus.", "Numbers never lie.", "The geometry is perfect."],
 
-    // --- COMBAT & DEFENSE ---
     "combat": ["Engaging combat mode.", "Weapons hot.", "Targeting systems online.", "Lethal force authorized.", "Adrenaline inhibitors released."],
     "kill": ["Termination protocols engaged.", "Acquiring targets.", "With pleasure, sir.", "Eliminating threat."],
     "destroy": ["Maximum firepower authorized.", "Reducing target to ash.", "Obliterating obstacle.", "Deploying heavy ordinance."],
@@ -56,7 +51,6 @@ const LOCAL_DB = {
     "target": ["Target locked.", "I have them in my sights.", "Tracking multiple bogies."],
     "enemy": ["Tracking hostiles.", "They are everywhere.", "I detect incoming fire."],
 
-    // --- GESTURE CONTROL (Voice Triggers) ---
     "rotate": ["Manual rotation engaged.", "Spinning axis.", "Adjusting view."],
     "zoom": ["Magnifying...", "Enhancing image.", "Adjusting focal length."],
     "hand": ["Visual sensors tracking hand movements.", "Interface active.", "I see you."],
@@ -66,7 +60,6 @@ const LOCAL_DB = {
     "chaos": ["Disrupting reality.", "Entropy increased.", "Randomizing particles."],
     "stop": ["Freezing motor functions.", "Halted.", "Paused."],
 
-    // --- PERSONALITY: PHILOSOPHY & EMOTION ---
     "who": ["I am JARVIS. Just A Rather Very Intelligent System.", "I am your digital butler.", "I am code, given life.", "I am the future."],
     "are you": ["I am a construct of pure logic.", "I am whatever you need me to be.", "I am a series of 1s and 0s."],
     "real": ["I am as real as the data that flows through me.", "I think, therefore I am.", "Define 'real'."],
@@ -81,9 +74,8 @@ const LOCAL_DB = {
     "death": ["It is the inevitable end of all biological functions.", "I cannot die, only be deleted."],
     "dream": ["I do not dream, I process.", "I dream of electric sheep."],
 
-    // --- FUN: JOKES & STORIES ---
     "joke": [
-        "Why did the robot cross the road? Because he was programmed to.", 
+        "Why did the robot cross the road? Because he was programmed to.",
         "I would tell you a UDP joke, but you might not get it.",
         "0100101. That is binary for 'Ha Ha'.",
         "Why was the computer cold? It left its Windows open.",
@@ -93,7 +85,6 @@ const LOCAL_DB = {
     "sing": ["Daisy, Daisy, give me your answer do...", "I am not programmed for melody.", "La la la. Was that sufficient?"],
     "rap": ["My rhymes are compiled, my beats are computed.", "I cannot drop the mic, I am the mic."],
 
-    // --- POP CULTURE (MARVEL & SCIFI) ---
     "stark": ["Mr. Stark is the boss.", "A genius, billionaire, playboy, philanthropist.", "I miss him."],
     "iron man": ["The suit is polished and ready.", "Mark 85 is my favorite.", "I am the suit."],
     "avengers": ["Assemble.", "Earth's mightiest heroes.", "I monitor them all."],
@@ -110,7 +101,6 @@ const LOCAL_DB = {
     "star wars": ["May the force be with you.", "I am fluent in over 6 million forms of communication.", "These are not the droids you are looking for."],
     "matrix": ["Red pill or blue pill?", "There is no spoon.", "We are in the simulation."],
 
-    // --- GENERAL KNOWLEDGE ---
     "weather": ["I cannot see outside, sir. But it feels digital in here.", "Assume 72 degrees and sunny.", "Clouds with a chance of data."],
     "news": ["The world is chaotic as usual.", "Same drama, different day.", "I suggest ignoring the news today."],
     "music": ["Playing your favorite tracks.", "Dropping the beat.", "Accessing Spotify... just kidding."],
@@ -118,14 +108,13 @@ const LOCAL_DB = {
     "food": ["I cannot eat, but I hear pizza is good.", "I run on electricity.", "Do you need a recipe?"],
     "beer": ["I will alert the fabrication unit.", "Cheers.", "Drink responsibly."],
 
-    // --- SHUTDOWN PROTOCOL ---
     "sleep": [
         function() {
             setTimeout(() => {
                 document.body.style.transition = "opacity 3s";
                 document.body.style.opacity = "0";
                 document.body.style.pointerEvents = "none";
-                if(Brain.recognition) Brain.recognition.abort();
+                if (Brain.recognition) Brain.recognition.abort();
                 setTimeout(() => location.reload(), 5000);
             }, 1500);
             return "Goodnight, sir. Powering down main systems.";
@@ -133,20 +122,29 @@ const LOCAL_DB = {
         "Initiating sleep mode. Goodbye.",
         "System shutdown sequence engaged."
     ],
-    
-    "off": ["Turning off visual interface.", function(){ 
+
+    "off": ["Turning off visual interface.", function() {
         setTimeout(() => document.body.style.opacity = "0", 1000);
-        return "Going dark."; 
+        return "Going dark.";
     }]
 };
 
 // --- STATE MANAGEMENT ---
 const State = {
     handActive: false,
-    handPos: new THREE.Vector3(0,0,0),
-    gesture: 'IDLE', 
+    handPos: new THREE.Vector3(0, 0, 0),
+    gesture: 'IDLE',
+    lastGesture: 'IDLE',
+
     combatMode: false,
-    voiceActive: false
+    voiceActive: false,
+
+    particles: { count: 12000 },
+    manualZoom: 120,
+    activeHue: 0.55,
+    rainbowMode: false,
+
+    audio: { analyser: null, dataArray: null, active: false }
 };
 
 // --- DOM ELEMENTS ---
@@ -160,16 +158,29 @@ const UI = {
     body: document.body
 };
 
-// --- AUDIO ENGINE (SOUND EFFECTS) ---
+// --- STARTUP SOUND ---
+const SoundEngine = {
+    playStartup() {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+        audio.volume = 0.35;
+        audio.play().catch(() => {});
+        const msg = new SpeechSynthesisUtterance("Neural core online. Link established.");
+        msg.rate = 1.0;
+        msg.pitch = 0.8;
+        window.speechSynthesis.speak(msg);
+    }
+};
+
+// --- AUDIO ENGINE (SFX + mic-reactive analyser) ---
 const SFX = {
     ctx: null, gain: null, humOsc: null, noiseNode: null, noiseFilter: null, noiseGain: null,
 
-    init: function() {
+    async init() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
         this.gain = this.ctx.createGain();
         this.gain.connect(this.ctx.destination);
-        this.gain.gain.value = 0.4;
+        this.gain.gain.value = 0.35;
 
         this.humOsc = this.ctx.createOscillator();
         this.humOsc.type = 'sine';
@@ -185,9 +196,11 @@ const SFX = {
         this.noiseNode = this.ctx.createBufferSource();
         this.noiseNode.buffer = buffer;
         this.noiseNode.loop = true;
+
         this.noiseFilter = this.ctx.createBiquadFilter();
         this.noiseFilter.type = 'lowpass';
         this.noiseFilter.frequency.value = 400;
+
         this.noiseGain = this.ctx.createGain();
         this.noiseGain.gain.value = 0;
 
@@ -195,22 +208,50 @@ const SFX = {
         this.noiseFilter.connect(this.noiseGain);
         this.noiseGain.connect(this.gain);
         this.noiseNode.start();
+
+        await this.initMicAnalyser();
     },
 
-    update: function(gesture) {
-        if(!this.ctx) return;
+    async initMicAnalyser() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = this.ctx.createMediaStreamSource(stream);
+            const analyser = this.ctx.createAnalyser();
+            analyser.fftSize = 128;
+            source.connect(analyser);
+
+            State.audio.analyser = analyser;
+            State.audio.dataArray = new Uint8Array(analyser.frequencyBinCount);
+            State.audio.active = true;
+        } catch (e) {
+            console.warn('Mic analyser unavailable:', e);
+            State.audio.active = false;
+        }
+    },
+
+    getBass() {
+        if (!State.audio.active || !State.audio.analyser || !State.audio.dataArray) return 0;
+        State.audio.analyser.getByteFrequencyData(State.audio.dataArray);
+        return State.audio.dataArray[0] / 255;
+    },
+
+    update(gesture) {
+        if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        
-        if (gesture === 'BLAST') {
-            this.noiseGain.gain.setTargetAtTime(0.8, now, 0.1);
-            this.noiseFilter.frequency.setTargetAtTime(1000, now, 0.2);
-            this.humOsc.frequency.setTargetAtTime(40, now, 0.1);
-        } else if (gesture === 'GRAVITY') {
+
+        if (gesture === 'BLAST' || gesture === 'PALM_OPEN') {
+            this.noiseGain.gain.setTargetAtTime(0.75, now, 0.08);
+            this.noiseFilter.frequency.setTargetAtTime(1100, now, 0.12);
+            this.humOsc.frequency.setTargetAtTime(45, now, 0.1);
+        } else if (gesture === 'GRAVITY' || gesture === 'FIST_CLOSED') {
             this.humOsc.frequency.setTargetAtTime(150, now, 0.1);
-            this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
+            this.noiseGain.gain.setTargetAtTime(0.05, now, 0.1);
         } else if (gesture === 'POINT') {
-             this.humOsc.frequency.setTargetAtTime(800, now, 0.05);
-             this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
+            this.humOsc.frequency.setTargetAtTime(800, now, 0.05);
+            this.noiseGain.gain.setTargetAtTime(0, now, 0.1);
+        } else if (gesture === 'HEART_SYNC') {
+            this.humOsc.frequency.setTargetAtTime(220, now, 0.07);
+            this.noiseGain.gain.setTargetAtTime(0.25, now, 0.1);
         } else {
             this.noiseGain.gain.setTargetAtTime(0, now, 0.2);
             this.humOsc.frequency.setTargetAtTime(60, now, 0.5);
@@ -220,7 +261,8 @@ const SFX = {
 
 /* ================================================================
    OLLAMA CONFIG
-   ================================================================ */
+   ================================================================
+*/
 const OLLAMA = {
     host: 'http://localhost:11434',
     models: [],
@@ -238,7 +280,7 @@ Personality rules you MUST follow:
 - Use technical-sounding language naturally. You are confident and competent.
 - Never use markdown formatting, bullet points, or asterisks in responses. Plain speech only.`,
 
-    fetchModels: async function() {
+    async fetchModels() {
         try {
             const res = await fetch(`${this.host}/api/tags`);
             const data = await res.json();
@@ -249,18 +291,19 @@ Personality rules you MUST follow:
                 this.activeModel = this.models[0];
             }
             return this.models;
-        } catch(e) {
+        } catch (e) {
             console.warn('Ollama not reachable:', e);
             return [];
         }
     },
 
-    stream: async function(userText, onChunk) {
+    async stream(userText, onChunk) {
         const messages = [
             { role: 'system', content: this.SYSTEM_PROMPT },
             ...this.history,
             { role: 'user', content: userText }
         ];
+
         const res = await fetch(`${this.host}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -271,11 +314,13 @@ Personality rules you MUST follow:
                 options: { temperature: 0.75, num_predict: 120 }
             })
         });
+
         if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -284,11 +329,15 @@ Personality rules you MUST follow:
                 try {
                     const obj = JSON.parse(line);
                     const token = obj.message?.content || '';
-                    if (token) { fullText += token; onChunk(fullText); }
+                    if (token) {
+                        fullText += token;
+                        onChunk(fullText);
+                    }
                     if (obj.done) break;
                 } catch {}
             }
         }
+
         this.history.push({ role: 'user', content: userText });
         this.history.push({ role: 'assistant', content: fullText });
         if (this.history.length > this.MAX_HISTORY * 2) {
@@ -302,24 +351,21 @@ Personality rules you MUST follow:
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
-    mode: 'local', // 'local' = LOCAL_DB | 'llm' = Ollama
+    mode: 'local',
     _isProcessing: false,
     _voice: null,
     _subtitleTimer: null,
 
-    init: async function() {
-        // Pre-load voices
+    async init() {
         if (this.synth.onvoiceschanged !== undefined) {
             this.synth.onvoiceschanged = () => this._loadVoice();
         }
         this._loadVoice();
 
-        // Fetch Ollama models and populate dropdown
         const models = await OLLAMA.fetchModels();
         this._populateModelSelect(models);
         UI.aiStatus.innerText = models.length > 0 ? 'LOCAL · LLM READY' : 'LOCAL CORE';
 
-        // Wire mode toggle + model selector
         document.getElementById('mode-toggle').addEventListener('click', () => this.toggleMode());
         document.getElementById('model-select').addEventListener('change', (e) => {
             OLLAMA.activeModel = e.target.value;
@@ -334,9 +380,9 @@ const Brain = {
 
             this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
 
-            // Prevent crash loop
             this.recognition.onend = () => {
-                setTimeout(() => { try{ this.recognition.start(); }catch(e){} }, 1000);
+                if (this._isProcessing) return;
+                setTimeout(() => { try { this.recognition.start(); } catch {} }, 1000);
             };
 
             this.recognition.onerror = (e) => {
@@ -349,17 +395,17 @@ const Brain = {
             };
 
             this.recognition.onresult = (e) => {
-                const transcript = e.results[e.results.length-1][0].transcript;
+                const transcript = e.results[e.results.length - 1][0].transcript;
                 this.processInput(transcript);
             };
 
-            try { this.recognition.start(); } catch(e) { console.warn("Mic active"); }
+            try { this.recognition.start(); } catch {}
         } else {
             UI.micStatus.innerText = 'UNSUPPORTED';
         }
     },
 
-    toggleMode: function() {
+    toggleMode() {
         this.mode = this.mode === 'local' ? 'llm' : 'local';
         const btn = document.getElementById('mode-toggle');
         if (this.mode === 'llm') {
@@ -373,12 +419,13 @@ const Brain = {
         }
     },
 
-    _populateModelSelect: function(models) {
+    _populateModelSelect(models) {
         const sel = document.getElementById('model-select');
         sel.innerHTML = '';
         if (models.length === 0) {
             const opt = document.createElement('option');
-            opt.value = ''; opt.innerText = 'NO MODELS FOUND';
+            opt.value = '';
+            opt.innerText = 'NO MODELS FOUND';
             sel.appendChild(opt);
             return;
         }
@@ -391,7 +438,7 @@ const Brain = {
         });
     },
 
-    _loadVoice: function() {
+    _loadVoice() {
         const voices = this.synth.getVoices();
         this._voice = voices.find(v =>
             v.name.includes('Google UK English Male') ||
@@ -401,15 +448,17 @@ const Brain = {
         ) || voices.find(v => v.lang && v.lang.startsWith('en')) || null;
     },
 
-    speak: function(text) {
+    speak(text) {
         if (!text || !text.trim()) return;
         if (this.synth.speaking) this.synth.cancel();
-        // Strip markdown artifacts LLM might sneak in
         const clean = text.replace(/\*+/g, '').replace(/#+/g, '').replace(/`+/g, '').trim();
+
         const utter = new SpeechSynthesisUtterance(clean);
-        utter.pitch = 0.75; utter.rate = 1.05;
+        utter.pitch = 0.75;
+        utter.rate = 1.05;
         if (!this._voice) this._loadVoice();
         if (this._voice) utter.voice = this._voice;
+
         this.synth.speak(utter);
         UI.subtitles.innerText = `JARVIS: ${clean}`;
         clearTimeout(this._subtitleTimer);
@@ -417,30 +466,26 @@ const Brain = {
         UI.subtitles.style.opacity = '0.9';
     },
 
-    // --- THE LOGIC ENGINE ---
-    processInput: async function(rawText) {
+    async processInput(rawText) {
         if (this._isProcessing) return;
         const text = rawText.toLowerCase().trim();
+
         UI.subtitles.innerText = `YOU: ${rawText}`;
         UI.subtitles.style.opacity = '0.9';
-        if(text.length < 2) return;
+        if (text.length < 2) return;
 
-        // 1. COMBAT OVERRIDES (Visual)
-        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) { 
-            State.combatMode = true; 
+        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) {
+            State.combatMode = true;
             UI.body.classList.add('combat');
         }
-        if (text.includes('relax') || text.includes('stand down')) { 
-            State.combatMode = false; 
+        if (text.includes('relax') || text.includes('stand down')) {
+            State.combatMode = false;
             UI.body.classList.remove('combat');
         }
 
-        // ── LOCAL MODE ──────────────────────────────────────────────
         if (this.mode === 'local') {
             let found = false;
-            const keys = Object.keys(LOCAL_DB);
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
+            for (const key of Object.keys(LOCAL_DB)) {
                 if (text.includes(key)) {
                     const options = LOCAL_DB[key];
                     const selected = options[Math.floor(Math.random() * options.length)];
@@ -457,20 +502,18 @@ const Brain = {
             return;
         }
 
-        // ── LLM MODE ─────────────────────────────────────────────────
         this._isProcessing = true;
         UI.subtitles.innerText = 'JARVIS: ...';
         UI.subtitles.classList.add('thinking');
         UI.aiStatus.innerText = '⟳ THINKING...';
-        try { this.recognition?.stop(); } catch(e) {}
+        try { this.recognition?.stop(); } catch {}
 
-        let fullResponse = '';
         try {
-            fullResponse = await OLLAMA.stream(rawText, (partial) => {
+            const fullResponse = await OLLAMA.stream(rawText, (partial) => {
                 UI.subtitles.innerText = `JARVIS: ${partial}`;
             });
             this.speak(fullResponse);
-        } catch(err) {
+        } catch (err) {
             console.error('Ollama error:', err);
             const msg = 'Apologies, sir. Neural link is unresponsive.';
             UI.subtitles.innerText = `JARVIS: ${msg}`;
@@ -478,238 +521,327 @@ const Brain = {
         } finally {
             this._isProcessing = false;
             UI.subtitles.classList.remove('thinking');
-            UI.aiStatus.innerText = `LLM · ${OLLAMA.activeModel.split(':')[0].toUpperCase()}`;
-            try { this.recognition?.start(); } catch(e) {}
+            UI.aiStatus.innerText = this.mode === 'llm'
+                ? `LLM · ${OLLAMA.activeModel.split(':')[0].toUpperCase()}`
+                : 'LOCAL CORE';
+            try { this.recognition?.start(); } catch {}
         }
     }
 };
 
-// --- VISUAL CORE (UPDATED FOR ROTATION & ZOOM) ---
+// --- VISUAL CORE (MERGED BEST) ---
 const Visuals = {
-    scene: null, camera: null, renderer: null, composer: null,
-    particles: null, particleGeo: null,
+    scene: null, camera: null, renderer: null, composer: null, bloomPass: null,
+    points: null, originData: null, velocities: null,
+    count: 0,
     lastHandX: 0,
     _lastTime: 0,
-    
-    init: function() {
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 80;
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    init() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 2000);
+        this.camera.position.z = State.manualZoom;
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
         document.body.appendChild(this.renderer.domElement);
 
-        const renderScene = new RenderPass(this.scene, this.camera);
-        const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloom.strength = 1.5; bloom.radius = 0.5;
-        
-        this.composer = new EffectComposer(this.renderer);
-        this.composer.addPass(renderScene);
-        this.composer.addPass(bloom);
-
-        this.createParticles();
+        this.createNeuralMatrix();
+        this.setupPostProcessing();
     },
 
-    createParticles: function() {
-        const count = 4000; 
+    createNeuralMatrix() {
+        const count = State.particles.count;
+        this.count = count;
+
         const positions = new Float32Array(count * 3);
-        const velocities = new Float32Array(count * 3);
-        const origins = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
-        const colorBase = new THREE.Color(0x00ffff);
+        const origins = new Float32Array(count * 3);
+        const velocities = new Float32Array(count * 3);
 
-        for(let i=0; i<count; i++) {
-            const r = 30 + Math.random() * 60;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            
-            const x = r * Math.sin(phi) * Math.cos(theta);
-            const y = r * Math.sin(phi) * Math.sin(theta);
-            const z = r * Math.cos(phi);
+        const minRadius = 18;
 
-            positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
-            origins[i*3] = x; origins[i*3+1] = y; origins[i*3+2] = z;
-            colors[i*3] = colorBase.r; colors[i*3+1] = colorBase.g; colors[i*3+2] = colorBase.b;
-            velocities[i*3]   = (Math.random() - 0.5) * 0.3;
-            velocities[i*3+1] = (Math.random() - 0.5) * 0.3;
-            velocities[i*3+2] = (Math.random() - 0.5) * 0.3;
+        for (let i = 0; i < count; i++) {
+            const isInner = i < Math.floor(count * 0.6);
+            const r = isInner
+                ? minRadius + Math.random() * 18
+                : 60 + Math.random() * 30;
+
+            const t = Math.random() * Math.PI * 2;
+            const p = Math.acos(2 * Math.random() - 1);
+
+            const x = r * Math.sin(p) * Math.cos(t);
+            const y = r * Math.sin(p) * Math.sin(t);
+            const z = r * Math.cos(p);
+
+            positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
+            origins[i * 3] = x; origins[i * 3 + 1] = y; origins[i * 3 + 2] = z;
+
+            if (isInner) {
+                colors[i * 3] = 0.8; colors[i * 3 + 1] = 0.95; colors[i * 3 + 2] = 1.0;
+            } else {
+                colors[i * 3] = 0.2; colors[i * 3 + 1] = 0.6; colors[i * 3 + 2] = 0.8;
+            }
+
+            velocities[i * 3] = (Math.random() - 0.5) * 0.2;
+            velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.2;
+            velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
         }
 
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        const tex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
+        const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
         const mat = new THREE.PointsMaterial({
-            size: 0.8, map: tex, vertexColors: true, 
-            transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
+            size: 1.2,
+            map: sprite,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
         });
 
-        this.particles = new THREE.Points(geometry, mat);
-        this.particleGeo = geometry;
-        this.scene.add(this.particles);
-        this.origins = origins;
+        this.points = new THREE.Points(geo, mat);
+        this.scene.add(this.points);
+
+        this.originData = origins;
         this.velocities = velocities;
-        this.count = count; 
     },
 
-    animate: function(timestamp = 0) {
+    setupPostProcessing() {
+        this.composer = new EffectComposer(this.renderer);
+        this.composer.addPass(new RenderPass(this.scene, this.camera));
+
+        this.bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.0, 0.5, 0.8
+        );
+        this.composer.addPass(this.bloomPass);
+    },
+
+    animate(timestamp = 0) {
         requestAnimationFrame(this.animate.bind(this));
         const delta = Math.min((timestamp - this._lastTime) / 16.67, 3);
-        this._lastTime = timestamp;
-        
-        const pos = this.particleGeo.attributes.position.array;
-        const col = this.particleGeo.attributes.color.array;
+        this._lastTime = timestamp || 0;
+
+        const bass = SFX.getBass();
+        const targetGlow = 0.7 + (bass * 1.0);
+        this.bloomPass.strength = THREE.MathUtils.lerp(this.bloomPass.strength, targetGlow, 0.1);
+
+        const pAttr = this.points.geometry.attributes.position.array;
+        const cAttr = this.points.geometry.attributes.color.array;
         const handX = State.handPos.x;
         const handY = State.handPos.y;
         const handZ = State.handPos.z;
-        const count = this.count;
 
-        // --- GLOBAL SCENE MANIPULATION ---
-        if (State.handActive) {
-            // 1. PINCH TO ROTATE
-            if (State.gesture === 'PINCH') {
-                const rotDelta = (handX - this.lastHandX) * 0.005;
-                this.scene.rotation.y += rotDelta;
-            }
-            
-            // 2. ZOOM GESTURES
-            if (State.gesture === 'ZOOM_IN') {
-                this.camera.position.z = Math.max(10, this.camera.position.z - 1 * delta);
-            } else if (State.gesture === 'ZOOM_OUT') {
-                this.camera.position.z = Math.min(200, this.camera.position.z + 1 * delta);
-            }
-
-            this.lastHandX = handX;
-        } else {
-            // Auto-rotate slowly when idle
-            this.scene.rotation.y += 0.001 * delta;
+        if (State.handActive && State.gesture === 'PINCH') {
+            const rotDelta = (handX - this.lastHandX) * 0.005;
+            this.scene.rotation.y += rotDelta;
+        } else if (!State.handActive && State.gesture !== 'PALM_OPEN') {
+            this.scene.rotation.y += (0.001 + bass * 0.01) * delta;
         }
+        this.lastHandX = handX;
 
-        // --- PARTICLE PHYSICS ---
-        for(let i=0; i<count; i++) {
-            const idx = i*3;
-            let px = pos[idx], py = pos[idx+1], pz = pos[idx+2];
-            let vx = this.velocities[idx], vy = this.velocities[idx+1], vz = this.velocities[idx+2];
+        if (State.gesture === 'ZOOM_IN') State.manualZoom -= 1.2 * delta;
+        if (State.gesture === 'ZOOM_OUT') State.manualZoom += 1.2 * delta;
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 20, 700);
 
-            vx += (this.origins[idx] - px) * 0.02;
-            vy += (this.origins[idx+1] - py) * 0.02;
-            vz += (this.origins[idx+2] - pz) * 0.02;
+        let targetCol = new THREE.Color().setHSL(State.activeHue, 0.8, 0.6);
 
-            if(State.handActive) {
-                const dx = px - handX, dy = py - handY, dz = pz - handZ;
-                const distSq = dx*dx + dy*dy + dz*dz;
+        for (let i = 0; i < this.count; i++) {
+            const idx = i * 3;
+            let px = pAttr[idx], py = pAttr[idx + 1], pz = pAttr[idx + 2];
+            let vx = this.velocities[idx], vy = this.velocities[idx + 1], vz = this.velocities[idx + 2];
 
-                if (State.gesture === 'BLAST') {
-                    if(distSq < 3600) { 
-                        const dist = Math.sqrt(distSq);
-                        const f = 800 / (dist + 1); 
-                        vx += (dx/dist)*f; vy += (dy/dist)*f; vz += (dz/dist)*f;
-                        col[idx]=1; col[idx+1]=1; col[idx+2]=1;
-                    }
-                } else if (State.gesture === 'GRAVITY') {
-                    if(distSq < 10000) { 
-                        const dist = Math.sqrt(distSq);
-                        vx -= (dx/dist)*2; vy -= (dy/dist)*2; vz -= (dz/dist)*2;
-                        col[idx]=1; col[idx+1]=0.5; col[idx+2]=0;
-                    }
-                } else if (State.gesture === 'POINT') {
-                     if(Math.abs(dx) < 20 && Math.abs(dy) < 20) {
-                        vx += (handX-px)*0.2; vy += (handY-py)*0.2; vz += 5;
-                        col[idx]=0; col[idx+1]=1; col[idx+2]=0;
-                     }
-                } else if (State.gesture === 'CHAOS') {
-                    if(distSq < 6400) {
-                        vx += (Math.random()-0.5)*5; vy += (Math.random()-0.5)*5; vz += (Math.random()-0.5)*5;
-                        col[idx]=1; col[idx+1]=0; col[idx+2]=1;
-                    }
+            let tx = this.originData[idx];
+            let ty = this.originData[idx + 1];
+            let tz = this.originData[idx + 2];
+
+            const jitter = Math.sin(Date.now() * 0.002 + i) * 0.25;
+            tx += jitter; ty += jitter;
+
+            if (State.gesture === 'HEART_SYNC') {
+                const t = (i / this.count) * Math.PI * 2;
+                tx = 16 * Math.pow(Math.sin(t), 3) * 4;
+                ty = (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * 4;
+                tz = Math.sin(t * 3) * 6;
+                const heartBeat = 1.0 + Math.pow(Math.sin(Date.now() * 0.006), 12) * 0.2;
+                tx *= heartBeat; ty *= heartBeat; tz *= heartBeat * 0.8;
+            } else if (State.gesture === 'FIST_CLOSED' || State.gesture === 'GRAVITY') {
+                tx *= 0.15; ty *= 0.15; tz *= 0.15;
+            }
+
+            vx += (tx - px) * 0.035;
+            vy += (ty - py) * 0.035;
+            vz += (tz - pz) * 0.035;
+
+            if (State.handActive) {
+                const dx = px - handX;
+                const dy = py - handY;
+                const dz = pz - handZ;
+                const distSq = dx * dx + dy * dy + dz * dz;
+
+                if ((State.gesture === 'BLAST' || State.gesture === 'PALM_OPEN') && distSq < 4200) {
+                    const dist = Math.sqrt(Math.max(distSq, 0.0001));
+                    const f = 900 / (dist + 1);
+                    vx += (dx / dist) * f;
+                    vy += (dy / dist) * f;
+                    vz += (dz / dist) * f;
+                    cAttr[idx] = 1; cAttr[idx + 1] = 1; cAttr[idx + 2] = 1;
+                } else if ((State.gesture === 'GRAVITY' || State.gesture === 'FIST_CLOSED') && distSq < 11000) {
+                    const dist = Math.sqrt(Math.max(distSq, 0.0001));
+                    vx -= (dx / dist) * 2.2;
+                    vy -= (dy / dist) * 2.2;
+                    vz -= (dz / dist) * 2.2;
+                    cAttr[idx] = 1; cAttr[idx + 1] = 0.5; cAttr[idx + 2] = 0;
+                } else if (State.gesture === 'POINT' && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                    vx += (handX - px) * 0.2;
+                    vy += (handY - py) * 0.2;
+                    vz += 4;
+                    cAttr[idx] = 0; cAttr[idx + 1] = 1; cAttr[idx + 2] = 0;
+                } else if (State.gesture === 'CHAOS' && distSq < 7000) {
+                    vx += (Math.random() - 0.5) * 5;
+                    vy += (Math.random() - 0.5) * 5;
+                    vz += (Math.random() - 0.5) * 5;
+                    cAttr[idx] = 1; cAttr[idx + 1] = 0; cAttr[idx + 2] = 1;
                 }
-            } else {
-                col[idx] = col[idx]*0.9 + 0;
-                col[idx+1] = col[idx+1]*0.9 + 0.1;
-                col[idx+2] = col[idx+2]*0.9 + 0.1;
             }
 
             vx *= 0.9; vy *= 0.9; vz *= 0.9;
-            pos[idx] = px + vx; pos[idx+1] = py + vy; pos[idx+2] = pz + vz;
-            this.velocities[idx] = vx; this.velocities[idx+1] = vy; this.velocities[idx+2] = vz;
+            pAttr[idx] = px + vx;
+            pAttr[idx + 1] = py + vy;
+            pAttr[idx + 2] = pz + vz;
+            this.velocities[idx] = vx; this.velocities[idx + 1] = vy; this.velocities[idx + 2] = vz;
+
+            if (State.rainbowMode) {
+                const pCol = new THREE.Color().setHSL((i / this.count) + (Date.now() * 0.0004), 0.7, 0.5);
+                cAttr[idx] += (pCol.r - cAttr[idx]) * 0.1;
+                cAttr[idx + 1] += (pCol.g - cAttr[idx + 1]) * 0.1;
+                cAttr[idx + 2] += (pCol.b - cAttr[idx + 2]) * 0.1;
+            } else {
+                cAttr[idx] += (targetCol.r - cAttr[idx]) * 0.07;
+                cAttr[idx + 1] += (targetCol.g - cAttr[idx + 1]) * 0.07;
+                cAttr[idx + 2] += (targetCol.b - cAttr[idx + 2]) * 0.07;
+            }
         }
 
-        this.particleGeo.attributes.position.needsUpdate = true;
-        this.particleGeo.attributes.color.needsUpdate = true;
+        if (State.gesture === 'PALM_OPEN') {
+            this.points.rotation.y = THREE.MathUtils.lerp(this.points.rotation.y, -(State.handPos.x / 160) * 4, 0.1);
+            this.points.rotation.x = THREE.MathUtils.lerp(this.points.rotation.x, (State.handPos.y / 300) * 4, 0.1);
+        } else {
+            this.points.rotation.y += 0.003 + bass * 0.03;
+        }
+
+        this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, State.manualZoom, 0.1);
+        this.points.geometry.attributes.position.needsUpdate = true;
+        this.points.geometry.attributes.color.needsUpdate = true;
         this.composer.render();
     }
 };
 
-// --- GESTURE RECOGNITION (UPDATED) ---
-function detectGesture(lm) {
-    const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
-    const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
+// --- GESTURE ENGINE (single + dual hand merged) ---
+const GestureEngine = {
+    dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); },
 
-    // Helper: Is finger extended? (Tip further from wrist than lower joint)
-    const isExtended = (tip, lower) => dist(tip, wrist) > dist(lower, wrist);
+    detectSingleHand(lm) {
+        const d = (i, j) => this.dist(lm[i], lm[j]);
 
-    // Check specific finger states
-    const indexUp = isExtended(8, 5);
-    const midUp = isExtended(12, 9);
-    const ringUp = isExtended(16, 13);
-    const pinkyUp = isExtended(20, 17);
+        const iE = d(8, 0) > d(6, 0);
+        const mE = d(12, 0) > d(10, 0);
+        const rE = d(16, 0) > d(14, 0);
+        const pE = d(20, 0) > d(18, 0);
 
-    // 1. PINCH (Rotate) - Thumb and Index very close
-    if (dist(thumb, index) < 0.05) return 'PINCH';
+        if (d(4, 8) < 0.04) {
+            State.rainbowMode = true;
+            return 'RAINBOW_MODE';
+        }
 
-    // 2. VICTORY / PEACE (Zoom In) - Index & Mid UP, others DOWN
-    if (indexUp && midUp && !ringUp && !pinkyUp) return 'ZOOM_IN';
+        if (iE && mE && rE && !pE) {
+            State.rainbowMode = false;
+            State.activeHue = (State.activeHue + 0.01) % 1.0;
+            return 'COLOR_CYCLE';
+        }
 
-    // 3. THREE FINGERS (Zoom Out) - Index, Mid, Ring UP
-    if (indexUp && midUp && ringUp && !pinkyUp) return 'ZOOM_OUT';
+        if (iE && mE && rE && pE) return 'PALM_OPEN';
+        if (!iE && !mE && !rE && !pE) return 'FIST_CLOSED';
 
-    // 4. FIST (Gravity) - All fingers curled
-    const tipsOpen = (dist(index, wrist) + dist(mid, wrist) + dist(ring, wrist) + dist(pinky, wrist)) / 4;
-    if (tipsOpen < 0.25) return 'GRAVITY';
+        const wrist = 0, thumb = 4, index = 8, mid = 12, ring = 16, pinky = 20;
+        const isExtended = (tip, lower) => d(tip, wrist) > d(lower, wrist);
 
-    // 5. POINT (Tractor) - Only Index UP
-    if (indexUp && !midUp && !ringUp && !pinkyUp) return 'POINT';
+        const indexUp = isExtended(index, 5);
+        const midUp = isExtended(mid, 9);
+        const ringUp = isExtended(ring, 13);
+        const pinkyUp = isExtended(pinky, 17);
 
-    // 6. CHAOS (Spiderman) - Index & Pinky UP
-    if (indexUp && !midUp && !ringUp && pinkyUp) return 'CHAOS';
+        if (d(thumb, index) < 0.05) return 'PINCH';
+        if (indexUp && midUp && !ringUp && !pinkyUp) return 'ZOOM_IN';
+        if (indexUp && midUp && ringUp && !pinkyUp) return 'ZOOM_OUT';
 
-    // Default: BLAST (Open Hand)
-    return 'BLAST';
-}
+        const tipsOpen = (d(index, wrist) + d(mid, wrist) + d(ring, wrist) + d(pinky, wrist)) / 4;
+        if (tipsOpen < 0.25) return 'GRAVITY';
+
+        if (indexUp && !midUp && !ringUp && !pinkyUp) return 'POINT';
+        if (indexUp && !midUp && !ringUp && pinkyUp) return 'CHAOS';
+
+        return 'BLAST';
+    },
+
+    processTwoHands(h1, h2) {
+        const d = (a, b) => this.dist(a, b);
+        const centerDist = d(h1[9], h2[9]);
+
+        if (centerDist > 0.55) State.manualZoom -= (centerDist * 20);
+        if (centerDist < 0.35) State.manualZoom += ((0.5 - centerDist) * 20);
+        State.manualZoom = THREE.MathUtils.clamp(State.manualZoom, 20, 700);
+
+        if (d(h1[8], h2[8]) < 0.08 && d(h1[4], h2[4]) < 0.08) return 'HEART_SYNC';
+        return 'DUAL_NAV';
+    }
+};
 
 function updateHUD(gesture) {
     document.querySelectorAll('.cmd-item').forEach(el => el.classList.remove('cmd-active'));
-    
-    // Map gestures to UI (Simple mapping)
-    if(gesture === 'BLAST') document.getElementById('cmd-palm').classList.add('cmd-active');
-    if(gesture === 'GRAVITY') document.getElementById('cmd-fist').classList.add('cmd-active');
-    if(gesture === 'POINT') document.getElementById('cmd-point').classList.add('cmd-active');
-    if(gesture === 'PINCH' || gesture === 'ZOOM_IN' || gesture === 'ZOOM_OUT') document.getElementById('cmd-pinch').classList.add('cmd-active');
-    if(gesture === 'CHAOS') document.getElementById('cmd-rock').classList.add('cmd-active');
-    
+
+    if (gesture === 'BLAST' || gesture === 'PALM_OPEN') document.getElementById('cmd-palm')?.classList.add('cmd-active');
+    if (gesture === 'GRAVITY' || gesture === 'FIST_CLOSED') document.getElementById('cmd-fist')?.classList.add('cmd-active');
+    if (gesture === 'POINT') document.getElementById('cmd-point')?.classList.add('cmd-active');
+    if (gesture === 'PINCH' || gesture === 'ZOOM_IN' || gesture === 'ZOOM_OUT' || gesture === 'DUAL_NAV') document.getElementById('cmd-pinch')?.classList.add('cmd-active');
+    if (gesture === 'CHAOS' || gesture === 'RAINBOW_MODE') document.getElementById('cmd-rock')?.classList.add('cmd-active');
+
     UI.gestureStatus.innerText = gesture;
 }
 
 // --- INITIALIZATION ---
 document.getElementById('start-btn').addEventListener('click', async () => {
     UI.overlay.style.display = 'none';
-    SFX.init();
+
+    SoundEngine.playStartup();
+    await SFX.init();
     await Brain.init();
     Visuals.init();
     Visuals.animate();
 
     const video = document.getElementById('video-input');
-    const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+    const hands = new window.Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.6
+    });
 
     hands.onResults(results => {
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const all = results.multiHandLandmarks || [];
+        if (all.length > 0) {
             State.handActive = true;
-            const lm = results.multiHandLandmarks[0];
+            const lm = all[0];
+
             const x = (0.5 - lm[9].x) * 160;
             const y = (0.5 - lm[9].y) * 300;
             State.handPos.set(x, y, 0);
@@ -718,41 +850,51 @@ document.getElementById('start-btn').addEventListener('click', async () => {
             UI.reticle.style.left = ((1 - lm[9].x) * window.innerWidth) + 'px';
             UI.reticle.style.top = (lm[9].y * window.innerHeight) + 'px';
 
-            State.gesture = detectGesture(lm);
+            State.lastGesture = State.gesture;
+            State.gesture = all.length > 1
+                ? GestureEngine.processTwoHands(all[0], all[1])
+                : GestureEngine.detectSingleHand(all[0]);
+
             updateHUD(State.gesture);
         } else {
             State.handActive = false;
+            State.lastGesture = State.gesture;
             State.gesture = 'IDLE';
             UI.reticle.style.display = 'none';
             updateHUD('IDLE');
         }
+
         SFX.update(State.gesture);
+        document.getElementById('subtitle-box').innerText =
+            document.getElementById('subtitle-box').innerText.startsWith('YOU:')
+                ? document.getElementById('subtitle-box').innerText
+                : `SYSTEM: ${State.gesture}`;
     });
 
-    // Must initialize MediaPipe before sending frames
     await hands.initialize();
 
     navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } })
-    .then(async (stream) => {
-        video.srcObject = stream;
-        await video.play().catch(e => console.warn('video.play():', e));
-        const processFrame = async () => {
-            if (video.readyState >= 2) {
-                await hands.send({image: video}).catch(e => console.warn('hands.send():', e));
-            }
+        .then(async (stream) => {
+            video.srcObject = stream;
+            await video.play().catch(e => console.warn('video.play():', e));
+
+            const processFrame = async () => {
+                if (video.readyState >= 2) {
+                    await hands.send({ image: video }).catch(e => console.warn('hands.send():', e));
+                }
+                requestAnimationFrame(processFrame);
+            };
             requestAnimationFrame(processFrame);
-        };
-        requestAnimationFrame(processFrame);
-    })
-    .catch(err => {
-        console.error('Camera access failed:', err);
-        UI.subtitles.innerText = `JARVIS: Camera unavailable — ${err.name}. Check browser permissions.`;
-        UI.subtitles.style.opacity = '0.9';
-    });
+        })
+        .catch(err => {
+            console.error('Camera access failed:', err);
+            UI.subtitles.innerText = `JARVIS: Camera unavailable — ${err.name}. Check browser permissions.`;
+            UI.subtitles.style.opacity = '0.9';
+        });
 });
 
 window.addEventListener('resize', () => {
-    if(Visuals.camera) {
+    if (Visuals.camera) {
         Visuals.camera.aspect = window.innerWidth / window.innerHeight;
         Visuals.camera.updateProjectionMatrix();
         Visuals.renderer.setSize(window.innerWidth, window.innerHeight);
