@@ -4,10 +4,9 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ================================================================
-   LOCAL INTELLIGENCE DATABASE
-   Used when Brain.mode === 'local' (instant keyword responses).
-   Switch to LLM mode in the HUD for full Ollama intelligence.
-   ================================================================ */
+   LOCAL INTELLIGENCE DATABASE (GOD MODE)
+   ================================================================
+*/
 const LOCAL_DB = {
     // --- CORE INTERACTIONS ---
     "hello": ["Greetings, sir.", "Online and ready.", "At your service.", "Hello.", "Systems operational.", "I am listening."],
@@ -224,11 +223,8 @@ const SFX = {
    ================================================================ */
 const OLLAMA = {
     host: 'http://localhost:11434',
-    // Populated at startup from /api/tags
     models: [],
-    // Active model — user picks from HUD dropdown
     activeModel: 'qwen3:14b',
-    // Conversation history for multi-turn context (last N turns)
     history: [],
     MAX_HISTORY: 10,
 
@@ -242,13 +238,12 @@ Personality rules you MUST follow:
 - Use technical-sounding language naturally. You are confident and competent.
 - Never use markdown formatting, bullet points, or asterisks in responses. Plain speech only.`,
 
-    // Fetch available models from Ollama
     fetchModels: async function() {
         try {
             const res = await fetch(`${this.host}/api/tags`);
             const data = await res.json();
             this.models = data.models
-                .filter(m => !m.name.startsWith('kimi')) // skip cloud-only
+                .filter(m => !m.name.startsWith('kimi'))
                 .map(m => m.name);
             if (this.models.length > 0 && !this.models.includes(this.activeModel)) {
                 this.activeModel = this.models[0];
@@ -260,16 +255,12 @@ Personality rules you MUST follow:
         }
     },
 
-    // Stream a response from Ollama, calling onChunk(text) per token
-    // Returns the full response string when done
     stream: async function(userText, onChunk) {
-        // Build messages array with history
         const messages = [
             { role: 'system', content: this.SYSTEM_PROMPT },
             ...this.history,
             { role: 'user', content: userText }
         ];
-
         const res = await fetch(`${this.host}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -280,13 +271,11 @@ Personality rules you MUST follow:
                 options: { temperature: 0.75, num_predict: 120 }
             })
         });
-
         if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
-
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -300,14 +289,11 @@ Personality rules you MUST follow:
                 } catch {}
             }
         }
-
-        // Store in history (keep last N turns)
         this.history.push({ role: 'user', content: userText });
         this.history.push({ role: 'assistant', content: fullText });
         if (this.history.length > this.MAX_HISTORY * 2) {
             this.history = this.history.slice(-this.MAX_HISTORY * 2);
         }
-
         return fullText;
     }
 };
@@ -316,12 +302,13 @@ Personality rules you MUST follow:
 const Brain = {
     synth: window.speechSynthesis,
     recognition: null,
-    // 'local' = LOCAL_DB keyword matching | 'llm' = Ollama
-    mode: 'local',
+    mode: 'local', // 'local' = LOCAL_DB | 'llm' = Ollama
     _isProcessing: false,
+    _voice: null,
+    _subtitleTimer: null,
 
     init: async function() {
-        // Load voice
+        // Pre-load voices
         if (this.synth.onvoiceschanged !== undefined) {
             this.synth.onvoiceschanged = () => this._loadVoice();
         }
@@ -332,16 +319,12 @@ const Brain = {
         this._populateModelSelect(models);
         UI.aiStatus.innerText = models.length > 0 ? 'LOCAL · LLM READY' : 'LOCAL CORE';
 
-        // Wire mode toggle button
+        // Wire mode toggle + model selector
         document.getElementById('mode-toggle').addEventListener('click', () => this.toggleMode());
-
-        // Wire model selector
         document.getElementById('model-select').addEventListener('change', (e) => {
             OLLAMA.activeModel = e.target.value;
-            console.log('Model switched to:', OLLAMA.activeModel);
         });
 
-        // Start speech recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             this.recognition = new SpeechRecognition();
@@ -349,9 +332,14 @@ const Brain = {
             this.recognition.lang = 'en-US';
             this.recognition.interimResults = false;
 
-            this.recognition.onstart  = () => UI.micStatus.innerText = 'ONLINE';
-            this.recognition.onend    = () => { setTimeout(() => { try{ this.recognition.start(); }catch(e){} }, 1000); };
-            this.recognition.onerror  = (e) => {
+            this.recognition.onstart = () => UI.micStatus.innerText = "ONLINE";
+
+            // Prevent crash loop
+            this.recognition.onend = () => {
+                setTimeout(() => { try{ this.recognition.start(); }catch(e){} }, 1000);
+            };
+
+            this.recognition.onerror = (e) => {
                 if (e.error === 'not-allowed') {
                     UI.micStatus.innerText = 'BLOCKED';
                     UI.subtitles.innerText = 'JARVIS: Microphone access denied.';
@@ -359,11 +347,13 @@ const Brain = {
                     console.warn('Speech error:', e.error);
                 }
             };
+
             this.recognition.onresult = (e) => {
-                const transcript = e.results[e.results.length - 1][0].transcript;
+                const transcript = e.results[e.results.length-1][0].transcript;
                 this.processInput(transcript);
             };
-            try { this.recognition.start(); } catch(e) {}
+
+            try { this.recognition.start(); } catch(e) { console.warn("Mic active"); }
         } else {
             UI.micStatus.innerText = 'UNSUPPORTED';
         }
@@ -373,11 +363,11 @@ const Brain = {
         this.mode = this.mode === 'local' ? 'llm' : 'local';
         const btn = document.getElementById('mode-toggle');
         if (this.mode === 'llm') {
-            btn.innerText   = '[ LLM MODE ✦ ]';
+            btn.innerText = '[ LLM MODE ✦ ]';
             btn.classList.add('mode-llm');
             UI.aiStatus.innerText = `LLM · ${OLLAMA.activeModel.split(':')[0].toUpperCase()}`;
         } else {
-            btn.innerText   = '[ LOCAL MODE ]';
+            btn.innerText = '[ LOCAL MODE ]';
             btn.classList.remove('mode-llm');
             UI.aiStatus.innerText = 'LOCAL CORE';
         }
@@ -395,15 +385,11 @@ const Brain = {
         models.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m;
-            // Trim size tag for display: "qwen3:14b" → "QWEN3 14B"
             opt.innerText = m.replace(':', ' ').toUpperCase();
             if (m === OLLAMA.activeModel) opt.selected = true;
             sel.appendChild(opt);
         });
     },
-
-    _voice: null,
-    _subtitleTimer: null,
 
     _loadVoice: function() {
         const voices = this.synth.getVoices();
@@ -418,43 +404,45 @@ const Brain = {
     speak: function(text) {
         if (!text || !text.trim()) return;
         if (this.synth.speaking) this.synth.cancel();
-
-        // Strip any markdown artifacts the LLM might sneak in
+        // Strip markdown artifacts LLM might sneak in
         const clean = text.replace(/\*+/g, '').replace(/#+/g, '').replace(/`+/g, '').trim();
-
         const utter = new SpeechSynthesisUtterance(clean);
         utter.pitch = 0.75; utter.rate = 1.05;
         if (!this._voice) this._loadVoice();
         if (this._voice) utter.voice = this._voice;
         this.synth.speak(utter);
-
+        UI.subtitles.innerText = `JARVIS: ${clean}`;
         clearTimeout(this._subtitleTimer);
         this._subtitleTimer = setTimeout(() => { UI.subtitles.style.opacity = '0.3'; }, 5000);
         UI.subtitles.style.opacity = '0.9';
     },
 
+    // --- THE LOGIC ENGINE ---
     processInput: async function(rawText) {
-        if (this._isProcessing) return; // debounce — LLM might still be streaming
+        if (this._isProcessing) return;
         const text = rawText.toLowerCase().trim();
-        if (text.length < 2) return;
-
-        UI.subtitles.innerText  = `YOU: ${rawText}`;
+        UI.subtitles.innerText = `YOU: ${rawText}`;
         UI.subtitles.style.opacity = '0.9';
+        if(text.length < 2) return;
 
-        // Combat override always works regardless of mode
-        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) {
-            State.combatMode = true;  UI.body.classList.add('combat');
+        // 1. COMBAT OVERRIDES (Visual)
+        if (text.includes('combat') || text.includes('kill') || text.includes('attack')) { 
+            State.combatMode = true; 
+            UI.body.classList.add('combat');
         }
-        if (text.includes('relax') || text.includes('stand down')) {
-            State.combatMode = false; UI.body.classList.remove('combat');
+        if (text.includes('relax') || text.includes('stand down')) { 
+            State.combatMode = false; 
+            UI.body.classList.remove('combat');
         }
 
         // ── LOCAL MODE ──────────────────────────────────────────────
         if (this.mode === 'local') {
             let found = false;
-            for (const key of Object.keys(LOCAL_DB)) {
+            const keys = Object.keys(LOCAL_DB);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
                 if (text.includes(key)) {
-                    const options  = LOCAL_DB[key];
+                    const options = LOCAL_DB[key];
                     const selected = options[Math.floor(Math.random() * options.length)];
                     const response = typeof selected === 'function' ? selected() : selected;
                     this.speak(response);
@@ -463,7 +451,7 @@ const Brain = {
                 }
             }
             if (!found) {
-                const fallbacks = ['Processing...', 'Data unclear.', 'I am listening.', 'Systems are idling.', 'Can you repeat that?'];
+                const fallbacks = ["Processing...", "Can you repeat that?", "Data unclear.", "I am listening.", "Systems are idling."];
                 this.speak(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
             }
             return;
@@ -473,18 +461,14 @@ const Brain = {
         this._isProcessing = true;
         UI.subtitles.innerText = 'JARVIS: ...';
         UI.subtitles.classList.add('thinking');
-        UI.aiStatus.innerText  = '⟳ THINKING...';
-
-        // Pause mic while streaming to avoid interruptions
+        UI.aiStatus.innerText = '⟳ THINKING...';
         try { this.recognition?.stop(); } catch(e) {}
 
         let fullResponse = '';
         try {
             fullResponse = await OLLAMA.stream(rawText, (partial) => {
-                // Stream tokens to subtitle in real-time
                 UI.subtitles.innerText = `JARVIS: ${partial}`;
             });
-            // Speak the complete response
             this.speak(fullResponse);
         } catch(err) {
             console.error('Ollama error:', err);
@@ -495,7 +479,6 @@ const Brain = {
             this._isProcessing = false;
             UI.subtitles.classList.remove('thinking');
             UI.aiStatus.innerText = `LLM · ${OLLAMA.activeModel.split(':')[0].toUpperCase()}`;
-            // Restart mic now that we're done streaming
             try { this.recognition?.start(); } catch(e) {}
         }
     }
@@ -549,7 +532,6 @@ const Visuals = {
             positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
             origins[i*3] = x; origins[i*3+1] = y; origins[i*3+2] = z;
             colors[i*3] = colorBase.r; colors[i*3+1] = colorBase.g; colors[i*3+2] = colorBase.b;
-            // Small random initial velocity so particles feel alive from the start
             velocities[i*3]   = (Math.random() - 0.5) * 0.3;
             velocities[i*3+1] = (Math.random() - 0.5) * 0.3;
             velocities[i*3+2] = (Math.random() - 0.5) * 0.3;
@@ -575,7 +557,7 @@ const Visuals = {
 
     animate: function(timestamp = 0) {
         requestAnimationFrame(this.animate.bind(this));
-        const delta = Math.min((timestamp - this._lastTime) / 16.67, 3); // ~1.0 at 60fps, capped
+        const delta = Math.min((timestamp - this._lastTime) / 16.67, 3);
         this._lastTime = timestamp;
         
         const pos = this.particleGeo.attributes.position.array;
@@ -592,12 +574,12 @@ const Visuals = {
                 const rotDelta = (handX - this.lastHandX) * 0.005;
                 this.scene.rotation.y += rotDelta;
             }
-
-            // 2. ZOOM GESTURES (delta-time corrected)
+            
+            // 2. ZOOM GESTURES
             if (State.gesture === 'ZOOM_IN') {
-                this.camera.position.z = Math.max(10, this.camera.position.z - delta);
+                this.camera.position.z = Math.max(10, this.camera.position.z - 1 * delta);
             } else if (State.gesture === 'ZOOM_OUT') {
-                this.camera.position.z = Math.min(200, this.camera.position.z + delta);
+                this.camera.position.z = Math.min(200, this.camera.position.z + 1 * delta);
             }
 
             this.lastHandX = handX;
@@ -720,16 +702,9 @@ document.getElementById('start-btn').addEventListener('click', async () => {
     Visuals.animate();
 
     const video = document.getElementById('video-input');
-    const hands = new window.Hands({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-    });
-
-    hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.5
-    });
+    const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
 
     hands.onResults(results => {
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
@@ -741,7 +716,7 @@ document.getElementById('start-btn').addEventListener('click', async () => {
 
             UI.reticle.style.display = 'block';
             UI.reticle.style.left = ((1 - lm[9].x) * window.innerWidth) + 'px';
-            UI.reticle.style.top  = (lm[9].y * window.innerHeight) + 'px';
+            UI.reticle.style.top = (lm[9].y * window.innerHeight) + 'px';
 
             State.gesture = detectGesture(lm);
             updateHUD(State.gesture);
@@ -757,22 +732,19 @@ document.getElementById('start-btn').addEventListener('click', async () => {
     // Must initialize MediaPipe before sending frames
     await hands.initialize();
 
-    navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: 'user' }
-    }).then(async (stream) => {
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } })
+    .then(async (stream) => {
         video.srcObject = stream;
-        // Await play() — avoids sending frames before video is actually live
         await video.play().catch(e => console.warn('video.play():', e));
-
         const processFrame = async () => {
-            // readyState 2 = HAVE_CURRENT_DATA, enough to send
             if (video.readyState >= 2) {
-                await hands.send({ image: video }).catch(e => console.warn('hands.send():', e));
+                await hands.send({image: video}).catch(e => console.warn('hands.send():', e));
             }
             requestAnimationFrame(processFrame);
         };
         requestAnimationFrame(processFrame);
-    }).catch(err => {
+    })
+    .catch(err => {
         console.error('Camera access failed:', err);
         UI.subtitles.innerText = `JARVIS: Camera unavailable — ${err.name}. Check browser permissions.`;
         UI.subtitles.style.opacity = '0.9';
